@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation, AlertCircle, Zap, PauseCircle, Power, Wrench } from "lucide-react";
+import { MapPin, Navigation, AlertCircle, Zap, PauseCircle, Power, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type VehicleState = "moving" | "charging" | "stopped" | "off" | "breakdown";
@@ -20,8 +20,8 @@ interface MapVehicle {
   lastUpdate: string;
 }
 
-// Mock data - ubicaciones en San José, Costa Rica
-const mockMapVehicles: MapVehicle[] = [
+// Ubicaciones iniciales en San José, Costa Rica
+const initialVehicles: MapVehicle[] = [
   {
     id: "1",
     name: "Toyota Hilux",
@@ -31,7 +31,7 @@ const mockMapVehicles: MapVehicle[] = [
     lng: -84.0907,
     state: "moving",
     speed: 45,
-    lastUpdate: "Hace 2 min",
+    lastUpdate: "Ahora",
   },
   {
     id: "2",
@@ -42,7 +42,7 @@ const mockMapVehicles: MapVehicle[] = [
     lng: -84.1008,
     state: "charging",
     battery: 65,
-    lastUpdate: "Hace 1 min",
+    lastUpdate: "Ahora",
   },
   {
     id: "3",
@@ -118,126 +118,158 @@ const stateConfig: Record<
 };
 
 export function FleetMap() {
+  const [vehicles, setVehicles] = useState<MapVehicle[]>(initialVehicles);
   const [selectedVehicle, setSelectedVehicle] = useState<MapVehicle | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>(
+    new Date().toLocaleTimeString("es-CR")
+  );
+
+  // Actualización en tiempo real - cada 3 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVehicles((prev) =>
+        prev.map((vehicle) => {
+          // Vehículos en movimiento se mueven ligeramente
+          if (vehicle.state === "moving") {
+            const latChange = (Math.random() - 0.5) * 0.001;
+            const lngChange = (Math.random() - 0.5) * 0.001;
+            const speedVariation = Math.max(
+              30,
+              Math.min(60, (vehicle.speed || 45) + (Math.random() - 0.5) * 10)
+            );
+
+            return {
+              ...vehicle,
+              lat: vehicle.lat + latChange,
+              lng: vehicle.lng + lngChange,
+              speed: Math.round(speedVariation),
+            };
+          }
+
+          // Vehículos en carga pueden aumentar batería
+          if (vehicle.state === "charging" && vehicle.battery !== undefined) {
+            const newBattery = Math.min(100, vehicle.battery + Math.random() * 5);
+            return {
+              ...vehicle,
+              battery: Math.round(newBattery),
+            };
+          }
+
+          return vehicle;
+        })
+      );
+
+      setLastUpdateTime(new Date().toLocaleTimeString("es-CR"));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleVehicleSelect = useCallback((vehicle: MapVehicle) => {
     setSelectedVehicle(vehicle);
   }, []);
 
+  const handleRefresh = () => {
+    setVehicles(initialVehicles);
+    setLastUpdateTime(new Date().toLocaleTimeString("es-CR"));
+  };
+
   return (
     <Card className="col-span-full" data-testid="fleet-map">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Mapa de Flota en Tiempo Real
-          </CardTitle>
-          <div className="flex gap-1">
-            {Object.entries(stateConfig).map(([state, config]) => (
-              <div key={state} className="flex items-center gap-1">
-                <div className={`h-3 w-3 rounded-full ${config.bgColor}`} />
-                <span className="text-xs text-muted-foreground">{config.label}</span>
-              </div>
-            ))}
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Mapa de Flota en Tiempo Real
+            </CardTitle>
+            <span className="text-xs text-muted-foreground ml-2">
+              Actualizado: {lastUpdateTime}
+            </span>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleRefresh}
+            data-testid="button-refresh-map"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid gap-4 lg:grid-cols-4">
-          {/* Mapa simulado */}
+          {/* Mapa */}
           <div className="lg:col-span-3 rounded-lg border bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 p-6">
-            <div className="relative h-[500px] w-full rounded-md border border-dashed border-muted-foreground/20 bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-              {/* Simulación de mapa con Grid */}
-              <div className="absolute inset-0 grid grid-cols-10 grid-rows-10 opacity-10">
-                {Array.from({ length: 100 }).map((_, i) => (
-                  <div key={i} className="border border-muted" />
-                ))}
-              </div>
+            {/* Contenedor del mapa con iframe de Google Maps */}
+            <div className="w-full rounded-md overflow-hidden border shadow-sm mb-4">
+              <iframe
+                width="100%"
+                height="500"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d62887.92905151252!2d-84.10963784863279!3d9.92846000000000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8fa0e3a6000001cd%3A0x800917dfaa1c6cc!2sSan%20Jos%C3%A9%2C%20Costa%20Rica!5e0!3m2!1ses!2scr!4v1234567890`}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
 
-              {/* Marcadores de vehículos */}
-              <div className="relative w-full h-full">
-                {mockMapVehicles.map((vehicle) => {
-                  const xPos = ((vehicle.lng + 84.15) / 0.15) * 100;
-                  const yPos = ((10.0 - vehicle.lat) / 0.1) * 100;
-                  const config = stateConfig[vehicle.state];
-                  const Icon = config.icon;
-
-                  return (
-                    <button
-                      key={vehicle.id}
-                      onClick={() => handleVehicleSelect(vehicle)}
-                      className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group ${
-                        selectedVehicle?.id === vehicle.id ? "z-10" : ""
-                      }`}
-                      style={{
-                        left: `${xPos}%`,
-                        top: `${yPos}%`,
-                      }}
-                      data-testid={`map-marker-${vehicle.id}`}
-                    >
-                      {/* Pulso de animación */}
+            {/* Información de rutas activas */}
+            <div className="grid gap-2">
+              <div className="text-sm font-medium">Rutas Activas - En Tiempo Real</div>
+              <div className="space-y-2">
+                {vehicles
+                  .filter((v) => v.state === "moving" || v.state === "charging")
+                  .map((vehicle) => {
+                    const config = stateConfig[vehicle.state];
+                    return (
                       <div
-                        className={`absolute h-8 w-8 rounded-full opacity-75 animate-pulse ${config.bgColor}`}
-                      />
-                      {/* Marcador */}
-                      <div
-                        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 shadow-lg transition-all hover-elevate ${config.bgColor} ${
-                          selectedVehicle?.id === vehicle.id ? "ring-2 ring-primary" : ""
-                        }`}
+                        key={vehicle.id}
+                        className="flex items-center justify-between rounded-md border p-2 text-sm hover-elevate"
+                        data-testid={`route-${vehicle.id}`}
                       >
-                        <Icon className={`h-5 w-5 ${config.color}`} />
+                        <div>
+                          <p className="font-medium">
+                            {vehicle.plate} ({vehicle.driver})
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {vehicle.state === "moving"
+                              ? `Ubicación: ${vehicle.lat.toFixed(4)}°, ${vehicle.lng.toFixed(4)}°`
+                              : "En estación de carga"}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className={config.bgColor}>
+                          {vehicle.speed
+                            ? `${vehicle.speed} km/h`
+                            : `${vehicle.battery}% batería`}
+                        </Badge>
                       </div>
-                      {/* Tooltip */}
-                      <div className="invisible group-hover:visible absolute -top-16 whitespace-nowrap bg-slate-900 text-white text-xs px-2 py-1 rounded pointer-events-none">
-                        {vehicle.name} - {vehicle.plate}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Leyenda */}
-              <div className="absolute bottom-4 left-4 text-xs text-muted-foreground">
-                <p className="font-medium mb-1">San José, Costa Rica</p>
-                <p>Zona de Cobertura GPS</p>
+                    );
+                  })}
               </div>
             </div>
 
-            {/* Información de rutas */}
-            <div className="mt-4 grid gap-2">
-              <div className="text-sm font-medium">Rutas Activas</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-md border p-2 text-sm">
-                  <div>
-                    <p className="font-medium">SJO-123 (Juan Pérez)</p>
-                    <p className="text-xs text-muted-foreground">
-                      Escazú → San Antonio de Belén • 12.5 km
-                    </p>
+            {/* Leyenda de estados */}
+            <div className="mt-4 p-3 bg-muted/30 rounded-md">
+              <div className="text-xs font-medium mb-2">Estados de Vehículos:</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(stateConfig).map(([state, config]) => (
+                  <div key={state} className="flex items-center gap-2">
+                    <div className={`h-3 w-3 rounded-full ${config.bgColor}`} />
+                    <span>{config.label}</span>
                   </div>
-                  <Badge variant="secondary" className="text-blue-600">
-                    45 km/h
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between rounded-md border p-2 text-sm">
-                  <div>
-                    <p className="font-medium">HER-456 (María García)</p>
-                    <p className="text-xs text-muted-foreground">
-                      Estación CNFL - Escazú • En carga
-                    </p>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    65% batería
-                  </Badge>
-                </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Panel lateral con detalles */}
+          {/* Panel lateral con detalles en tiempo real */}
           <div className="space-y-3">
-            <div className="text-sm font-medium">Vehículos en Flota</div>
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {mockMapVehicles.map((vehicle) => {
+            <div className="text-sm font-medium">
+              Vehículos en Flota ({vehicles.length})
+            </div>
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {vehicles.map((vehicle) => {
                 const config = stateConfig[vehicle.state];
                 const Icon = config.icon;
 
@@ -252,8 +284,8 @@ export function FleetMap() {
                     }`}
                     data-testid={`vehicle-panel-${vehicle.id}`}
                   >
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-md ${config.bgColor}`}>
+                    <div className="flex items-start gap-2 mb-2">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-md ${config.bgColor} flex-shrink-0`}>
                         <Icon className={`h-4 w-4 ${config.color}`} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -265,10 +297,20 @@ export function FleetMap() {
                       <Badge variant="secondary" className={config.bgColor}>
                         {config.label}
                       </Badge>
-                      <div className="text-xs text-muted-foreground">
-                        <p>📍 {vehicle.lastUpdate}</p>
-                        {vehicle.speed && <p>⚡ {vehicle.speed} km/h</p>}
-                        {vehicle.battery && <p>🔋 {vehicle.battery}%</p>}
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>
+                          📍 {vehicle.lat.toFixed(4)}, {vehicle.lng.toFixed(4)}
+                        </p>
+                        {vehicle.speed && (
+                          <p className="text-blue-600 dark:text-blue-400 font-medium">
+                            ⚡ {vehicle.speed} km/h
+                          </p>
+                        )}
+                        {vehicle.battery !== undefined && (
+                          <p className="text-green-600 dark:text-green-400 font-medium">
+                            🔋 {vehicle.battery}%
+                          </p>
+                        )}
                       </div>
                     </div>
                   </button>
