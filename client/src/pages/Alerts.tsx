@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { AlertsPanel } from "@/components/AlertsPanel";
+import { PredictiveAnalysis } from "@/components/PredictiveAnalysis";
 import { AlertTriangle, Bell, Wrench, TrendingDown, Lightbulb } from "lucide-react";
 
 // todo: remove mock functionality
@@ -28,8 +29,9 @@ export default function Alerts() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <AlertsPanel />
+          <PredictiveAnalysis />
         </div>
         <div className="space-y-6">
           <Card>
