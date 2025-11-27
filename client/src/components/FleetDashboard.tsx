@@ -103,26 +103,38 @@ export function FleetDashboard() {
 
       <FleetMap />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        {mockKPIs.map((kpi, index) => (
-          <Card key={index} className="hover-elevate" data-testid={`fleet-kpi-${index}`}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                  <p className="mt-1 text-2xl font-bold">{kpi.value}</p>
-                  <p className={`mt-1 text-xs ${kpi.trend === "down" ? "text-green-600" : "text-muted-foreground"}`}>
-                    {kpi.change}
-                  </p>
+      <div className="grid gap-4 md:grid-cols-6">
+        {mockKPIs.map((kpi, index) => {
+          const colors = [
+            "bg-blue-100 dark:bg-blue-900/30 text-blue-600",
+            "bg-orange-100 dark:bg-orange-900/30 text-orange-600",
+            "bg-green-100 dark:bg-green-900/30 text-green-600",
+            "bg-red-100 dark:bg-red-900/30 text-red-600",
+          ];
+          const color = colors[index] || "bg-muted";
+
+          return (
+            <Card key={index} className="hover-elevate" data-testid={`fleet-kpi-${index}`}>
+              <CardContent className="p-4">
+                <div className="flex flex-col items-start gap-2">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-md ${color}`}>
+                    {index === 0 && <Car className="h-5 w-5" />}
+                    {index === 1 && <DollarSign className="h-5 w-5" />}
+                    {index === 2 && <TrendingDown className="h-5 w-5" />}
+                    {index === 3 && <AlertTriangle className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                    <p className="mt-1 text-2xl font-bold">{kpi.value}</p>
+                    <p className={`mt-1 text-xs ${kpi.trend === "down" ? "text-green-600" : "text-muted-foreground"}`}>
+                      {kpi.change}
+                    </p>
+                  </div>
                 </div>
-                {index === 0 && <Car className="h-5 w-5 text-muted-foreground" />}
-                {index === 1 && <DollarSign className="h-5 w-5 text-muted-foreground" />}
-                {index === 2 && <TrendingDown className="h-5 w-5 text-green-500" />}
-                {index === 3 && <AlertTriangle className="h-5 w-5 text-amber-500" />}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Card>

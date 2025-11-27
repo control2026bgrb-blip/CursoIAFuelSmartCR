@@ -15,10 +15,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 type AlertType = "warning" | "maintenance" | "price" | "tip";
+type AlertCategory = "all" | "maintenance" | "price" | "warning" | "eco" | "promotion";
 
 interface Alert {
   id: string;
   type: AlertType;
+  category: AlertCategory;
   title: string;
   description: string;
   time: string;
@@ -31,78 +33,99 @@ interface Alert {
 const initialAlerts: Alert[] = [
   {
     id: "1",
-    type: "warning",
-    title: "Consumo Inusual Detectado",
-    description: "Tu Toyota Corolla consumió 15% más combustible de lo normal esta semana.",
-    time: "Hace 2 horas",
-    actionLabel: "Ver Detalles",
-    icon: AlertTriangle,
-  },
-  {
-    id: "2",
     type: "maintenance",
-    title: "Cambio de Aceite Recomendado",
-    description: "Según tu kilometraje, se recomienda cambio de aceite en los próximos 500km.",
+    category: "maintenance",
+    title: "Mantenimiento Próximo",
+    description: "Tu vehículo alcanzará los 50,000 km pronto. Se recomienda cambio de aceite y revisión de frenos.",
     time: "Hace 1 día",
-    actionLabel: "Buscar Taller",
+    actionLabel: "Ver detalles",
     icon: Wrench,
   },
   {
-    id: "3",
+    id: "2",
     type: "price",
-    title: "Precios Bajos Cerca de Ti",
-    description: "Gasolinera Delta (Escazú) bajó a ₡695/L - ₡15 menos que el promedio.",
+    category: "price",
+    title: "Precio Bajo Detectado",
+    description: "Total Lindora tiene gasolina Super a ₡785/L. 3% más barato que tu promedio.",
     time: "Hace 3 horas",
-    actionLabel: "Ver Mapa",
+    actionLabel: "Ver mapa",
     icon: TrendingDown,
+  },
+  {
+    id: "3",
+    type: "warning",
+    category: "warning",
+    title: "Consumo Inusual",
+    description: "Tu consumo aumentó 20% esta semana. Revisa la presión de llantas o el filtro de aire.",
+    time: "Hace 5 horas",
+    icon: AlertTriangle,
   },
   {
     id: "4",
     type: "tip",
-    title: "Consejo de Eco-Conducción",
+    category: "eco",
+    title: "Tip de Eco-Driving",
     description: "Mantén velocidades constantes en autopista para mejorar eficiencia hasta 10%.",
-    time: "Hace 5 horas",
+    time: "Hace 8 horas",
     icon: MapPin,
   },
 ];
 
-const alertStyles: Record<AlertType, { bg: string; text: string; border: string }> = {
+const alertStyles: Record<AlertType, { bg: string; text: string; borderColor: string; leftBorder: string }> = {
   warning: {
-    bg: "bg-amber-50 dark:bg-amber-900/20",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-200 dark:border-amber-800",
+    bg: "bg-red-50 dark:bg-red-900/20",
+    text: "text-red-600 dark:text-red-400",
+    borderColor: "#ef4444",
+    leftBorder: "border-l-4 border-l-red-500",
   },
   maintenance: {
     bg: "bg-blue-50 dark:bg-blue-900/20",
     text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-200 dark:border-blue-800",
+    borderColor: "#3b82f6",
+    leftBorder: "border-l-4 border-l-blue-500",
   },
   price: {
     bg: "bg-green-50 dark:bg-green-900/20",
     text: "text-green-600 dark:text-green-400",
-    border: "border-green-200 dark:border-green-800",
+    borderColor: "#10b981",
+    leftBorder: "border-l-4 border-l-green-500",
   },
   tip: {
-    bg: "bg-purple-50 dark:bg-purple-900/20",
-    text: "text-purple-600 dark:text-purple-400",
-    border: "border-purple-200 dark:border-purple-800",
+    bg: "bg-teal-50 dark:bg-teal-900/20",
+    text: "text-teal-600 dark:text-teal-400",
+    borderColor: "#14b8a6",
+    leftBorder: "border-l-4 border-l-teal-500",
   },
 };
 
+const categories: { id: AlertCategory; label: string; count?: string }[] = [
+  { id: "all", label: "Todas" },
+  { id: "maintenance", label: "Mantenimiento" },
+  { id: "price", label: "Precios" },
+  { id: "warning", label: "Anomalías" },
+  { id: "eco", label: "Eco-Tips" },
+  { id: "promotion", label: "Promociones" },
+];
+
 export function AlertsPanel() {
   const [alerts, setAlerts] = useState(initialAlerts);
+  const [selectedCategory, setSelectedCategory] = useState<AlertCategory>("all");
 
   const dismissAlert = (id: string) => {
     setAlerts(alerts.filter((a) => a.id !== id));
   };
 
+  const filteredAlerts = selectedCategory === "all" 
+    ? alerts 
+    : alerts.filter((a) => a.category === selectedCategory);
+
   return (
     <Card data-testid="alerts-panel">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-medium">Alertas Inteligentes</CardTitle>
-            <Badge>{alerts.length}</Badge>
+            <Badge>{filteredAlerts.length}</Badge>
           </div>
           <Button variant="ghost" size="sm" data-testid="button-alert-settings">
             <Bell className="mr-1 h-4 w-4" />
@@ -110,17 +133,38 @@ export function AlertsPanel() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {alerts.length === 0 ? (
+      
+      {/* Tabs de categorías */}
+      <div className="border-b px-4 py-2">
+        <div className="flex gap-2 overflow-x-auto">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors ${
+                selectedCategory === cat.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+              }`}
+              data-testid={`category-${cat.id}`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <CardContent className="space-y-3 pt-3">
+        {filteredAlerts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Bell className="mb-2 h-10 w-10 opacity-50" />
-            <p className="text-sm">No hay alertas en este momento</p>
+            <p className="text-sm">No hay alertas en esta categoría</p>
           </div>
         ) : (
-          alerts.map((alert) => (
+          filteredAlerts.map((alert) => (
             <div
               key={alert.id}
-              className={`relative rounded-md border p-4 ${alertStyles[alert.type].bg} ${alertStyles[alert.type].border}`}
+              className={`relative rounded-md border p-4 ${alertStyles[alert.type].bg} ${alertStyles[alert.type].leftBorder}`}
               data-testid={`alert-${alert.id}`}
             >
               <Button
@@ -137,9 +181,13 @@ export function AlertsPanel() {
                   <alert.icon className={`h-5 w-5 ${alertStyles[alert.type].text}`} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium">{alert.title}</h4>
-                  <p className="mt-1 text-sm text-muted-foreground">{alert.description}</p>
-                  <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-semibold">{alert.title}</h4>
+                      <p className="mt-1 text-sm text-muted-foreground">{alert.description}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       <span>{alert.time}</span>

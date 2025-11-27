@@ -78,30 +78,42 @@ export function PredictiveAnalysis() {
   };
 
   return (
-    <Card data-testid="predictive-analysis">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-medium">
-              Análisis Predictivo IA
-            </CardTitle>
-            <Badge variant="secondary">Beta</Badge>
+    <div className="space-y-4">
+      {/* Banner Principal */}
+      <div className="rounded-lg bg-gradient-to-r from-blue-600 to-pink-600 p-6 text-white shadow-lg" data-testid="predictive-banner">
+        <div className="flex gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <AlertCircle className="h-5 w-5" />
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            data-testid="button-refresh-predictions"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
+          <div>
+            <h3 className="font-semibold">Análisis Predictivo IA</h3>
+            <p className="mt-1 text-sm text-white/90">
+              Basado en tus patrones de conducción, estimamos que el mejor momento para cargar combustible es <span className="font-bold">mañana por la tarde</span>. RECOPE actualiza precios los primeros días de cada mes.
+            </p>
+          </div>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Predicciones basadas en tus patrones de conducción y datos de Costa Rica
-        </p>
-      </CardHeader>
+      </div>
+
+      <Card data-testid="predictive-analysis">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg font-medium">
+                Recomendaciones IA
+              </CardTitle>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              data-testid="button-refresh-predictions"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
+        </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
@@ -193,6 +205,7 @@ export function PredictiveAnalysis() {
           </p>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
