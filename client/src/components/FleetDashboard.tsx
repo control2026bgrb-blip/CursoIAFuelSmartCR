@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FleetMap } from "./FleetMap";
+import hiluxImg from "@assets/generated_images/white_toyota_hilux_pickup_truck.png";
+import hyundaiImg from "@assets/generated_images/silver_hyundai_h1_minibus_van.png";
+import nissanImg from "@assets/generated_images/gray_nissan_np300_pickup_truck.png";
+import bydImg from "@assets/generated_images/blue_byd_t3_electric_vehicle.png";
+import mitsubishiImg from "@assets/generated_images/red_mitsubishi_l200_pickup_truck.png";
 import {
   Car,
   Users,
@@ -25,6 +30,7 @@ interface FleetVehicle {
   efficiency: number;
   monthlySpend: number;
   alerts: number;
+  image: string;
 }
 
 interface FleetKPI {
@@ -36,11 +42,11 @@ interface FleetKPI {
 
 // todo: remove mock functionality - datos de Costa Rica
 const mockFleetVehicles: FleetVehicle[] = [
-  { id: "1", name: "Toyota Hilux", plate: "SJO-123", driver: "Juan Pérez", driverInitials: "JP", status: "active", efficiency: 85, monthlySpend: 245000, alerts: 0 },
-  { id: "2", name: "Hyundai H1", plate: "HER-456", driver: "María García", driverInitials: "MG", status: "active", efficiency: 72, monthlySpend: 380000, alerts: 1 },
-  { id: "3", name: "Nissan NP300", plate: "ALA-789", driver: "David Mora", driverInitials: "DM", status: "maintenance", efficiency: 0, monthlySpend: 120000, alerts: 2 },
-  { id: "4", name: "BYD T3", plate: "CAR-012", driver: "Sara Solís", driverInitials: "SS", status: "active", efficiency: 92, monthlySpend: 85000, alerts: 0 },
-  { id: "5", name: "Mitsubishi L200", plate: "LIB-345", driver: "Miguel Rojas", driverInitials: "MR", status: "idle", efficiency: 65, monthlySpend: 290000, alerts: 1 },
+  { id: "1", name: "Toyota Hilux", plate: "SJO-123", driver: "Juan Pérez", driverInitials: "JP", status: "active", efficiency: 85, monthlySpend: 245000, alerts: 0, image: hiluxImg },
+  { id: "2", name: "Hyundai H1", plate: "HER-456", driver: "María García", driverInitials: "MG", status: "active", efficiency: 72, monthlySpend: 380000, alerts: 1, image: hyundaiImg },
+  { id: "3", name: "Nissan NP300", plate: "ALA-789", driver: "David Mora", driverInitials: "DM", status: "maintenance", efficiency: 0, monthlySpend: 120000, alerts: 2, image: nissanImg },
+  { id: "4", name: "BYD T3", plate: "CAR-012", driver: "Sara Solís", driverInitials: "SS", status: "active", efficiency: 92, monthlySpend: 85000, alerts: 0, image: bydImg },
+  { id: "5", name: "Mitsubishi L200", plate: "LIB-345", driver: "Miguel Rojas", driverInitials: "MR", status: "idle", efficiency: 65, monthlySpend: 290000, alerts: 1, image: mitsubishiImg },
 ];
 
 const mockKPIs: FleetKPI[] = [
@@ -151,9 +157,12 @@ export function FleetDashboard() {
                   <tr key={vehicle.id} className="hover-elevate" data-testid={`fleet-vehicle-${vehicle.id}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent">
-                          <Car className="h-4 w-4 text-accent-foreground" />
-                        </div>
+                        <img 
+                          src={vehicle.image} 
+                          alt={vehicle.name} 
+                          className="h-12 w-12 rounded-md object-cover border border-border"
+                          data-testid={`vehicle-image-${vehicle.id}`}
+                        />
                         <div>
                           <p className="font-medium">{vehicle.name}</p>
                           <p className="text-xs text-muted-foreground">{vehicle.plate}</p>
