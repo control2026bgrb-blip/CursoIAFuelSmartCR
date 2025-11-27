@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { FleetMap } from "./FleetMap";
 import {
   Car,
   Users,
@@ -20,7 +21,7 @@ interface FleetVehicle {
   plate: string;
   driver: string;
   driverInitials: string;
-  status: "active" | "maintenance" | "idle";
+  status: "active" | "maintenance" | "idle" | "moving" | "charging" | "stopped" | "off" | "breakdown";
   efficiency: number;
   monthlySpend: number;
   alerts: number;
@@ -53,12 +54,22 @@ const statusColors = {
   active: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   maintenance: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   idle: "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400",
+  moving: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  charging: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  stopped: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  off: "bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400",
+  breakdown: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const statusLabels = {
   active: "Activo",
   maintenance: "En Taller",
   idle: "Inactivo",
+  moving: "En Movimiento",
+  charging: "En Carga",
+  stopped: "Detenido",
+  off: "Apagado",
+  breakdown: "Con Avería",
 };
 
 export function FleetDashboard() {
@@ -67,7 +78,7 @@ export function FleetDashboard() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold">Gestión de Flota</h2>
-          <p className="text-sm text-muted-foreground">Monitorea y administra tu flota de vehículos</p>
+          <p className="text-sm text-muted-foreground">Monitorea y administra tu flota de vehículos en tiempo real</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" data-testid="button-fleet-filter">
@@ -84,6 +95,8 @@ export function FleetDashboard() {
           </Button>
         </div>
       </div>
+
+      <FleetMap />
 
       <div className="grid gap-4 md:grid-cols-4">
         {mockKPIs.map((kpi, index) => (
