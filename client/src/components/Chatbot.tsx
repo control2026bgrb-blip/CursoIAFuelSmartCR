@@ -9,7 +9,6 @@ import {
   Send,
   Minimize2,
   Fuel,
-  HelpCircle,
   Sparkles,
 } from "lucide-react";
 
@@ -22,17 +21,17 @@ interface Message {
 
 // todo: remove mock functionality
 const quickReplies = [
-  "How can I save on fuel?",
-  "What's my eco score?",
-  "Nearby gas stations",
-  "Schedule maintenance",
+  "¿Cómo ahorro combustible?",
+  "¿Cuál es mi eco score?",
+  "Gasolineras cercanas",
+  "Agendar mantenimiento",
 ];
 
 const initialMessages: Message[] = [
   {
     id: "1",
     role: "assistant",
-    content: "Hi! I'm your FuelSmart assistant. How can I help you today? You can ask me about fuel efficiency, find nearby stations, or get eco-driving tips.",
+    content: "¡Hola! Soy tu asistente FuelSmart. ¿Cómo puedo ayudarte hoy? Puedes preguntarme sobre eficiencia de combustible, encontrar gasolineras cercanas o recibir consejos de eco-conducción.",
     timestamp: new Date(),
   },
 ];
@@ -69,14 +68,14 @@ export function Chatbot() {
     // Simulate AI response
     setTimeout(() => {
       const responses: Record<string, string> = {
-        "How can I save on fuel?":
-          "Here are some tips to save fuel:\n\n1. Maintain steady speeds on highways\n2. Avoid aggressive acceleration\n3. Keep tires properly inflated\n4. Use cruise control when possible\n5. Plan routes to avoid traffic",
-        "What's my eco score?":
-          "Your current Eco Score is 78/100 - Good! You've improved by 5 points this month. Keep maintaining steady speeds to boost it further.",
-        "Nearby gas stations":
-          "I found 3 stations near you:\n\n1. Shell (Main St) - $1.35/L - 0.8km\n2. Chevron (Oak Ave) - $1.38/L - 1.2km\n3. Costco - $1.29/L - 3.5km\n\nWould you like directions to any of these?",
-        "Schedule maintenance":
-          "Based on your mileage (45,320 km), I recommend:\n\n• Oil change - Due in 500km\n• Tire rotation - Due in 2,000km\n\nWould you like me to find nearby service centers?",
+        "¿Cómo ahorro combustible?":
+          "Aquí van algunos consejos para ahorrar combustible:\n\n1. Mantén velocidades constantes en autopista\n2. Evita aceleraciones bruscas\n3. Mantén llantas infladas correctamente\n4. Usa el aire acondicionado moderadamente\n5. Planifica rutas para evitar presas",
+        "¿Cuál es mi eco score?":
+          "Tu Eco Score actual es 78/100 - ¡Bueno! Has mejorado 5 puntos este mes. Sigue manteniendo velocidades constantes para subir más.",
+        "Gasolineras cercanas":
+          "Encontré 3 gasolineras cerca de ti:\n\n1. Delta (Escazú) - ₡695/L - 0.8km\n2. Uno (Santa Ana) - ₡698/L - 1.2km\n3. Total (Guachipelín) - ₡692/L - 2.5km\n\n¿Te gustaría direcciones a alguna?",
+        "Agendar mantenimiento":
+          "Según tu kilometraje (45,320 km), te recomiendo:\n\n• Cambio de aceite - En 500km\n• Rotación de llantas - En 2,000km\n\n¿Quieres que busque talleres cercanos?",
       };
 
       const aiMessage: Message = {
@@ -84,9 +83,9 @@ export function Chatbot() {
         role: "assistant",
         content:
           responses[messageText] ||
-          "I understand you're asking about " +
+          "Entiendo que preguntas sobre " +
             messageText.toLowerCase() +
-            ". Let me help you with that. Is there anything specific you'd like to know?",
+            ". Déjame ayudarte con eso. ¿Hay algo específico que quieras saber?",
         timestamp: new Date(),
       };
 
@@ -121,9 +120,9 @@ export function Chatbot() {
             <Fuel className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-sm font-medium">FuelSmart Assistant</p>
+            <p className="text-sm font-medium">Asistente FuelSmart</p>
             {!isMinimized && (
-              <p className="text-xs opacity-80">Online • Ready to help</p>
+              <p className="text-xs opacity-80">En línea • Listo para ayudar</p>
             )}
           </div>
         </div>
@@ -177,7 +176,7 @@ export function Chatbot() {
                   </div>
                   {message.role === "user" && (
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarFallback>CR</AvatarFallback>
                     </Avatar>
                   )}
                 </div>
@@ -221,7 +220,7 @@ export function Chatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Type a message..."
+                placeholder="Escribe un mensaje..."
                 className="flex-1"
                 data-testid="input-chat-message"
               />

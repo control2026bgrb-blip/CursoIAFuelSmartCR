@@ -27,32 +27,32 @@ interface AchievementBadge {
 const mockChallenges: Challenge[] = [
   {
     id: "1",
-    title: "Eco Driver",
-    description: "Maintain fuel efficiency below 8L/100km",
+    title: "Conductor Eco",
+    description: "Mantén eficiencia debajo de 8L/100km",
     progress: 12,
     target: 15,
-    reward: "50 points + Badge",
+    reward: "50 puntos + Insignia",
     icon: Flame,
     daysLeft: 5,
   },
   {
     id: "2",
-    title: "Consistent Tracker",
-    description: "Log fuel records for 30 consecutive days",
+    title: "Registro Constante",
+    description: "Registra combustible por 30 días consecutivos",
     progress: 22,
     target: 30,
-    reward: "100 points",
+    reward: "100 puntos",
     icon: Target,
     daysLeft: 8,
   },
 ];
 
 const mockBadges: AchievementBadge[] = [
-  { id: "1", name: "First Fill", icon: Star, earned: true, color: "text-yellow-500" },
-  { id: "2", name: "Eco Master", icon: Flame, earned: true, color: "text-green-500" },
-  { id: "3", name: "Fleet Leader", icon: Trophy, earned: false, color: "text-purple-500" },
-  { id: "4", name: "Top Saver", icon: Medal, earned: true, color: "text-blue-500" },
-  { id: "5", name: "Early Bird", icon: Gift, earned: false, color: "text-pink-500" },
+  { id: "1", name: "Primera Carga", icon: Star, earned: true, color: "text-yellow-500" },
+  { id: "2", name: "Eco Maestro", icon: Flame, earned: true, color: "text-green-500" },
+  { id: "3", name: "Líder Flota", icon: Trophy, earned: false, color: "text-purple-500" },
+  { id: "4", name: "Top Ahorro", icon: Medal, earned: true, color: "text-blue-500" },
+  { id: "5", name: "Madrugador", icon: Gift, earned: false, color: "text-pink-500" },
 ];
 
 export function GamificationCard() {
@@ -61,8 +61,8 @@ export function GamificationCard() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base font-medium">Active Challenges</CardTitle>
-            <Badge variant="secondary">2 Active</Badge>
+            <CardTitle className="text-base font-medium">Retos Activos</CardTitle>
+            <Badge variant="secondary">2 Activos</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -84,14 +84,14 @@ export function GamificationCard() {
                     </div>
                     {challenge.daysLeft && (
                       <Badge variant="outline" className="shrink-0">
-                        {challenge.daysLeft}d left
+                        {challenge.daysLeft}d restantes
                       </Badge>
                     )}
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">
-                        Progress: {challenge.progress}/{challenge.target}
+                        Progreso: {challenge.progress}/{challenge.target}
                       </span>
                       <span className="font-medium text-primary">{challenge.reward}</span>
                     </div>
@@ -107,9 +107,9 @@ export function GamificationCard() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base font-medium">Your Badges</CardTitle>
+            <CardTitle className="text-base font-medium">Tus Insignias</CardTitle>
             <span className="text-sm text-muted-foreground">
-              {mockBadges.filter((b) => b.earned).length}/{mockBadges.length} earned
+              {mockBadges.filter((b) => b.earned).length}/{mockBadges.length} obtenidas
             </span>
           </div>
         </CardHeader>

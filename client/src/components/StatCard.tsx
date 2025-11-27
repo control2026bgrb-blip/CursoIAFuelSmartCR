@@ -23,7 +23,7 @@ export function StatCard({
 }: StatCardProps) {
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor =
-    trend === "up" ? "text-green-600 dark:text-green-400" : trend === "down" ? "text-red-500" : "text-muted-foreground";
+    trend === "up" ? "text-red-500" : trend === "down" ? "text-green-600 dark:text-green-400" : "text-muted-foreground";
 
   return (
     <Card className="hover-elevate" data-testid={`stat-card-${title.toLowerCase().replace(/\s/g, "-")}`}>

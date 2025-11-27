@@ -27,41 +27,41 @@ interface Alert {
   dismissed?: boolean;
 }
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const initialAlerts: Alert[] = [
   {
     id: "1",
     type: "warning",
-    title: "Unusual Fuel Consumption",
-    description: "Your Toyota Camry consumed 15% more fuel than usual this week.",
-    time: "2 hours ago",
-    actionLabel: "View Details",
+    title: "Consumo Inusual Detectado",
+    description: "Tu Toyota Corolla consumió 15% más combustible de lo normal esta semana.",
+    time: "Hace 2 horas",
+    actionLabel: "Ver Detalles",
     icon: AlertTriangle,
   },
   {
     id: "2",
     type: "maintenance",
-    title: "Oil Change Recommended",
-    description: "Based on your mileage, an oil change is recommended within the next 500km.",
-    time: "1 day ago",
-    actionLabel: "Find Service",
+    title: "Cambio de Aceite Recomendado",
+    description: "Según tu kilometraje, se recomienda cambio de aceite en los próximos 500km.",
+    time: "Hace 1 día",
+    actionLabel: "Buscar Taller",
     icon: Wrench,
   },
   {
     id: "3",
     type: "price",
-    title: "Low Fuel Prices Nearby",
-    description: "Gas prices at Shell (Main St) dropped to $1.35/L - $0.07 below average.",
-    time: "3 hours ago",
-    actionLabel: "Get Directions",
+    title: "Precios Bajos Cerca de Ti",
+    description: "Gasolinera Delta (Escazú) bajó a ₡695/L - ₡15 menos que el promedio.",
+    time: "Hace 3 horas",
+    actionLabel: "Ver Mapa",
     icon: TrendingDown,
   },
   {
     id: "4",
     type: "tip",
-    title: "Eco-Driving Tip",
-    description: "Maintain steady speeds on the highway to improve fuel efficiency by up to 10%.",
-    time: "5 hours ago",
+    title: "Consejo de Eco-Conducción",
+    description: "Mantén velocidades constantes en autopista para mejorar eficiencia hasta 10%.",
+    time: "Hace 5 horas",
     icon: MapPin,
   },
 ];
@@ -101,12 +101,12 @@ export function AlertsPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-medium">Smart Alerts</CardTitle>
+            <CardTitle className="text-base font-medium">Alertas Inteligentes</CardTitle>
             <Badge>{alerts.length}</Badge>
           </div>
           <Button variant="ghost" size="sm" data-testid="button-alert-settings">
             <Bell className="mr-1 h-4 w-4" />
-            Settings
+            Configurar
           </Button>
         </div>
       </CardHeader>
@@ -114,7 +114,7 @@ export function AlertsPanel() {
         {alerts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Bell className="mb-2 h-10 w-10 opacity-50" />
-            <p className="text-sm">No alerts at the moment</p>
+            <p className="text-sm">No hay alertas en este momento</p>
           </div>
         ) : (
           alerts.map((alert) => (

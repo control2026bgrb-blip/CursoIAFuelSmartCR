@@ -9,10 +9,10 @@ import { EcoScoreCard } from "@/components/EcoScoreCard";
 import { AddRecordModal } from "@/components/AddRecordModal";
 import { Fuel, DollarSign, Gauge, Leaf } from "lucide-react";
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const mockVehicles = [
-  { name: "Toyota Camry", plate: "ABC-1234", type: "gasoline" as const, efficiency: "8.2 L/100km", lastFill: "2 days ago" },
-  { name: "Tesla Model 3", plate: "EV-5678", type: "electric" as const, efficiency: "15 kWh/100km", lastFill: "Yesterday" },
+  { name: "Toyota Corolla", plate: "SJO-123", type: "gasoline" as const, efficiency: "8.2 L/100km", lastFill: "Hace 2 días" },
+  { name: "BYD Dolphin", plate: "HER-456", type: "electric" as const, efficiency: "15 kWh/100km", lastFill: "Ayer" },
 ];
 
 export default function Dashboard() {
@@ -23,46 +23,46 @@ export default function Dashboard() {
     <div className="space-y-6 p-6" data-testid="page-dashboard">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Track your vehicle energy consumption</p>
+          <h1 className="text-2xl font-bold">Panel Principal</h1>
+          <p className="text-muted-foreground">Monitorea el consumo de energía de tus vehículos</p>
         </div>
         <Button onClick={() => setShowAddRecord(true)} data-testid="button-add-record">
           <Plus className="mr-2 h-4 w-4" />
-          Add Record
+          Agregar Registro
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Monthly Consumption"
+          title="Consumo Mensual"
           value="245.8 L"
-          subtitle="November 2025"
+          subtitle="Noviembre 2025"
           trend="down"
-          trendValue="12% vs last month"
+          trendValue="12% vs mes anterior"
           icon={Fuel}
         />
         <StatCard
-          title="Average Cost"
-          value="$1.42/L"
-          subtitle="Last 30 days"
+          title="Precio Promedio"
+          value="₡700/L"
+          subtitle="Últimos 30 días"
           trend="up"
-          trendValue="3% increase"
+          trendValue="3% aumento"
           icon={DollarSign}
         />
         <StatCard
-          title="Fuel Efficiency"
+          title="Eficiencia"
           value="8.2 L/100km"
-          subtitle="Current average"
+          subtitle="Promedio actual"
           trend="down"
-          trendValue="5% improvement"
+          trendValue="5% mejora"
           icon={Gauge}
         />
         <StatCard
-          title="Monthly Spend"
-          value="$349.04"
-          subtitle="This month"
+          title="Gasto Mensual"
+          value="₡172,060"
+          subtitle="Este mes"
           trend="down"
-          trendValue="8% savings"
+          trendValue="8% ahorro"
           icon={Leaf}
           iconColor="text-green-600"
         />
@@ -76,10 +76,10 @@ export default function Dashboard() {
         <div className="space-y-6">
           <div>
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="font-semibold">My Vehicles</h2>
+              <h2 className="font-semibold">Mis Vehículos</h2>
               <Button size="sm" variant="outline" data-testid="button-add-vehicle">
                 <Car className="mr-1 h-4 w-4" />
-                Add
+                Agregar
               </Button>
             </div>
             <div className="space-y-3">

@@ -25,46 +25,46 @@ interface Offer {
   type: "station" | "workshop" | "charge";
 }
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const mockOffers: Offer[] = [
   {
     id: "1",
-    title: "10% Off on Premium Fuel",
-    business: "Shell - Main Street",
-    discount: "10% OFF",
-    description: "Valid on all premium fuel purchases over 30L",
+    title: "10% Descuento en Súper",
+    business: "Gasolinera Delta - Escazú",
+    discount: "10% DESC",
+    description: "Válido en compras de combustible súper mayores a 30L",
     rating: 4.5,
     distance: "0.8 km",
-    expires: "Ends in 3 days",
+    expires: "Termina en 3 días",
     type: "station",
   },
   {
     id: "2",
-    title: "Free Oil Check",
-    business: "AutoCare Plus",
-    discount: "FREE",
-    description: "Complimentary oil level check with any service",
+    title: "Revisión de Aceite Gratis",
+    business: "Taller AutoTico - San José",
+    discount: "GRATIS",
+    description: "Revisión de nivel de aceite con cualquier servicio",
     rating: 4.8,
     distance: "1.2 km",
     type: "workshop",
   },
   {
     id: "3",
-    title: "50% Off First Charge",
-    business: "GreenCharge Network",
-    discount: "50% OFF",
-    description: "For new users at any GreenCharge station",
+    title: "50% Primera Carga",
+    business: "Estación CNFL - Heredia",
+    discount: "50% DESC",
+    description: "Para nuevos usuarios en cualquier estación CNFL",
     rating: 4.6,
     distance: "2.5 km",
-    expires: "Limited time",
+    expires: "Tiempo limitado",
     type: "charge",
   },
   {
     id: "4",
-    title: "Loyalty Bonus: 200 Points",
-    business: "Chevron",
+    title: "Bono Lealtad: 200 Puntos",
+    business: "Gasolinera Uno - Alajuela",
     discount: "+200 PTS",
-    description: "Earn bonus points on your next fill-up",
+    description: "Gana puntos extra en tu próxima carga",
     rating: 4.3,
     distance: "3.1 km",
     type: "station",
@@ -88,20 +88,20 @@ export function MarketplaceCard() {
     <Card data-testid="marketplace-section">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base font-medium">Marketplace & Offers</CardTitle>
+          <CardTitle className="text-base font-medium">Marketplace y Ofertas</CardTitle>
           <Badge variant="secondary">
             <Percent className="mr-1 h-3 w-3" />
-            {mockOffers.length} offers
+            {mockOffers.length} ofertas
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="all">
           <TabsList className="mb-4 w-full grid grid-cols-4">
-            <TabsTrigger value="all" data-testid="tab-all-offers">All</TabsTrigger>
-            <TabsTrigger value="stations" data-testid="tab-stations">Stations</TabsTrigger>
-            <TabsTrigger value="workshops" data-testid="tab-workshops">Workshops</TabsTrigger>
-            <TabsTrigger value="charging" data-testid="tab-charging">Charging</TabsTrigger>
+            <TabsTrigger value="all" data-testid="tab-all-offers">Todas</TabsTrigger>
+            <TabsTrigger value="stations" data-testid="tab-stations">Gasolineras</TabsTrigger>
+            <TabsTrigger value="workshops" data-testid="tab-workshops">Talleres</TabsTrigger>
+            <TabsTrigger value="charging" data-testid="tab-charging">Carga EV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-3 mt-0">
@@ -152,19 +152,19 @@ export function MarketplaceCard() {
 
           <TabsContent value="stations" className="mt-0">
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Showing fuel station offers only
+              Mostrando solo ofertas de gasolineras
             </p>
           </TabsContent>
 
           <TabsContent value="workshops" className="mt-0">
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Showing workshop offers only
+              Mostrando solo ofertas de talleres
             </p>
           </TabsContent>
 
           <TabsContent value="charging" className="mt-0">
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Showing EV charging offers only
+              Mostrando solo ofertas de carga eléctrica
             </p>
           </TabsContent>
         </Tabs>

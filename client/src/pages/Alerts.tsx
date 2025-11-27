@@ -7,10 +7,10 @@ import { AlertTriangle, Bell, Wrench, TrendingDown, Lightbulb } from "lucide-rea
 
 // todo: remove mock functionality
 const alertPreferences = [
-  { id: "anomalies", label: "Consumption Anomalies", description: "Alert when fuel usage is unusually high", enabled: true, icon: AlertTriangle },
-  { id: "maintenance", label: "Maintenance Reminders", description: "Get notified about upcoming service needs", enabled: true, icon: Wrench },
-  { id: "prices", label: "Price Alerts", description: "Notify when fuel prices drop nearby", enabled: true, icon: TrendingDown },
-  { id: "tips", label: "Eco-Driving Tips", description: "Receive suggestions to improve efficiency", enabled: false, icon: Lightbulb },
+  { id: "anomalies", label: "Anomalías de Consumo", description: "Alerta cuando el uso de combustible es inusualmente alto", enabled: true, icon: AlertTriangle },
+  { id: "maintenance", label: "Recordatorios de Mantenimiento", description: "Notificación sobre próximos servicios necesarios", enabled: true, icon: Wrench },
+  { id: "prices", label: "Alertas de Precios", description: "Notificar cuando bajan los precios cerca de ti", enabled: true, icon: TrendingDown },
+  { id: "tips", label: "Consejos de Eco-Conducción", description: "Recibir sugerencias para mejorar eficiencia", enabled: false, icon: Lightbulb },
 ];
 
 export default function Alerts() {
@@ -18,12 +18,12 @@ export default function Alerts() {
     <div className="space-y-6 p-6" data-testid="page-alerts">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Predictive Alerts</h1>
-          <p className="text-muted-foreground">AI-powered insights and recommendations</p>
+          <h1 className="text-2xl font-bold">Alertas Predictivas</h1>
+          <p className="text-muted-foreground">Análisis inteligente con IA y recomendaciones</p>
         </div>
         <Button variant="outline" data-testid="button-mark-all-read">
           <Bell className="mr-2 h-4 w-4" />
-          Mark All as Read
+          Marcar Todo como Leído
         </Button>
       </div>
 
@@ -34,7 +34,7 @@ export default function Alerts() {
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Alert Preferences</CardTitle>
+              <CardTitle className="text-base font-medium">Preferencias de Alertas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {alertPreferences.map((pref) => (
@@ -62,25 +62,25 @@ export default function Alerts() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">AI Recommendations</CardTitle>
+              <CardTitle className="text-base font-medium">Recomendaciones IA</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-md bg-primary/10 p-3">
-                <p className="text-sm font-medium text-primary">Best Time to Fill Up</p>
+                <p className="text-sm font-medium text-primary">Mejor Momento para Cargar</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Fuel prices typically drop on Tuesdays. Consider filling up tomorrow for potential savings of $0.05/L.
+                  Los precios suelen bajar los martes. Considera cargar mañana para ahorrar hasta ₡15/L.
                 </p>
               </div>
               <div className="rounded-md bg-green-50 p-3 dark:bg-green-900/20">
-                <p className="text-sm font-medium text-green-700 dark:text-green-400">Route Optimization</p>
+                <p className="text-sm font-medium text-green-700 dark:text-green-400">Optimización de Ruta</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Taking Highway 101 instead of Route 5 could save 15% fuel on your daily commute.
+                  Tomar la Ruta 27 en lugar de la Ruta 1 podría ahorrarte 15% de combustible en tu trayecto diario.
                 </p>
               </div>
               <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Driving Pattern</p>
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Patrón de Conducción</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Reducing rapid acceleration by 20% could improve your fuel efficiency by 8%.
+                  Reducir aceleraciones bruscas un 20% podría mejorar tu eficiencia de combustible en 8%.
                 </p>
               </div>
             </CardContent>

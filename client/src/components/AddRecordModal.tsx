@@ -32,7 +32,7 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
   const [scanComplete, setScanComplete] = useState(false);
   const { toast } = useToast();
 
-  // todo: remove mock functionality
+  // todo: remove mock functionality - datos de Costa Rica
   const [formData, setFormData] = useState({
     vehicle: "",
     liters: "",
@@ -45,30 +45,29 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
 
   const handleScan = () => {
     setIsScanning(true);
-    // Simulate scanning
     setTimeout(() => {
       setIsScanning(false);
       setScanComplete(true);
       setFormData({
-        vehicle: "Toyota Camry",
+        vehicle: "Toyota Corolla",
         liters: "45.2",
-        price: "1.42",
-        totalCost: "64.18",
+        price: "700",
+        totalCost: "31640",
         odometer: "45,320",
-        station: "Shell Station - Main St",
+        station: "Gasolinera Delta - Escazú",
         date: new Date().toISOString().split("T")[0],
       });
       toast({
-        title: "Receipt scanned successfully",
-        description: "Data extracted from your receipt",
+        title: "Recibo escaneado exitosamente",
+        description: "Datos extraídos del recibo",
       });
     }, 2000);
   };
 
   const handleSubmit = () => {
     toast({
-      title: "Record added",
-      description: "Your fuel record has been saved successfully",
+      title: "Registro agregado",
+      description: "Tu registro de combustible ha sido guardado",
     });
     onOpenChange(false);
     setScanComplete(false);
@@ -87,9 +86,9 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Fuel Record</DialogTitle>
+          <DialogTitle>Agregar Registro de Combustible</DialogTitle>
           <DialogDescription>
-            Choose a method to add your fuel record
+            Elige un método para agregar tu registro
           </DialogDescription>
         </DialogHeader>
 
@@ -120,18 +119,18 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
                   {isScanning ? (
                     <div className="flex flex-col items-center gap-3">
                       <div className="h-16 w-16 animate-pulse rounded-full bg-primary/20" />
-                      <p className="text-sm text-muted-foreground">Scanning receipt...</p>
+                      <p className="text-sm text-muted-foreground">Escaneando recibo...</p>
                     </div>
                   ) : (
                     <>
                       <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
-                      <p className="mb-1 text-sm font-medium">Upload receipt photo</p>
+                      <p className="mb-1 text-sm font-medium">Sube foto del recibo</p>
                       <p className="mb-4 text-xs text-muted-foreground">
-                        We'll extract liters, price, date & odometer
+                        Extraeremos litros, precio, fecha y kilometraje
                       </p>
                       <Button onClick={handleScan} data-testid="button-scan-receipt">
                         <Camera className="mr-2 h-4 w-4" />
-                        Scan Receipt
+                        Escanear Recibo
                       </Button>
                     </>
                   )}
@@ -140,7 +139,7 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
             ) : (
               <div className="flex items-center gap-2 rounded-md bg-green-50 p-3 text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 <Check className="h-5 w-5" />
-                <span className="text-sm font-medium">Data extracted successfully</span>
+                <span className="text-sm font-medium">Datos extraídos exitosamente</span>
               </div>
             )}
           </TabsContent>
@@ -149,13 +148,13 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <QrCode className="mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="mb-1 text-sm font-medium">Scan station QR code</p>
+                <p className="mb-1 text-sm font-medium">Escanea código QR de la gasolinera</p>
                 <p className="mb-4 text-xs text-muted-foreground">
-                  Point your camera at the QR code at the pump
+                  Apunta tu cámara al código QR en la bomba
                 </p>
                 <Button onClick={handleScan} data-testid="button-scan-qr">
                   <QrCode className="mr-2 h-4 w-4" />
-                  Open Scanner
+                  Abrir Escáner
                 </Button>
               </CardContent>
             </Card>
@@ -165,13 +164,13 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <Bluetooth className="mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="mb-1 text-sm font-medium">Connect OBD-II device</p>
+                <p className="mb-1 text-sm font-medium">Conectar dispositivo OBD-II</p>
                 <p className="mb-4 text-xs text-muted-foreground">
-                  Get real-time data from your vehicle
+                  Obtén datos en tiempo real de tu vehículo
                 </p>
                 <Button variant="outline" data-testid="button-connect-obd">
                   <Bluetooth className="mr-2 h-4 w-4" />
-                  Connect Device
+                  Conectar Dispositivo
                 </Button>
               </CardContent>
             </Card>
@@ -179,7 +178,7 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
 
           <TabsContent value="manual" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Enter the details manually
+              Ingresa los detalles manualmente
             </div>
           </TabsContent>
         </Tabs>
@@ -187,23 +186,23 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
         <div className="mt-4 grid gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="vehicle">Vehicle</Label>
+              <Label htmlFor="vehicle">Vehículo</Label>
               <Select
                 value={formData.vehicle}
                 onValueChange={(v) => setFormData({ ...formData, vehicle: v })}
               >
                 <SelectTrigger id="vehicle" data-testid="select-vehicle">
-                  <SelectValue placeholder="Select vehicle" />
+                  <SelectValue placeholder="Seleccionar vehículo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Toyota Camry">Toyota Camry</SelectItem>
-                  <SelectItem value="Tesla Model 3">Tesla Model 3</SelectItem>
-                  <SelectItem value="Ford F-150">Ford F-150</SelectItem>
+                  <SelectItem value="Toyota Corolla">Toyota Corolla</SelectItem>
+                  <SelectItem value="BYD Dolphin">BYD Dolphin</SelectItem>
+                  <SelectItem value="Mitsubishi L200">Mitsubishi L200</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Fecha</Label>
               <Input
                 id="date"
                 type="date"
@@ -216,7 +215,7 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="liters">Liters</Label>
+              <Label htmlFor="liters">Litros</Label>
               <Input
                 id="liters"
                 type="number"
@@ -227,22 +226,22 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Price/L</Label>
+              <Label htmlFor="price">Precio/L (₡)</Label>
               <Input
                 id="price"
                 type="number"
-                placeholder="0.00"
+                placeholder="0"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 data-testid="input-price"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="total">Total</Label>
+              <Label htmlFor="total">Total (₡)</Label>
               <Input
                 id="total"
                 type="number"
-                placeholder="0.00"
+                placeholder="0"
                 value={formData.totalCost}
                 onChange={(e) => setFormData({ ...formData, totalCost: e.target.value })}
                 data-testid="input-total"
@@ -252,20 +251,20 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="odometer">Odometer (km)</Label>
+              <Label htmlFor="odometer">Kilometraje</Label>
               <Input
                 id="odometer"
-                placeholder="Current mileage"
+                placeholder="Kilometraje actual"
                 value={formData.odometer}
                 onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
                 data-testid="input-odometer"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="station">Station</Label>
+              <Label htmlFor="station">Gasolinera</Label>
               <Input
                 id="station"
-                placeholder="Gas station name"
+                placeholder="Nombre de gasolinera"
                 value={formData.station}
                 onChange={(e) => setFormData({ ...formData, station: e.target.value })}
                 data-testid="input-station"
@@ -276,10 +275,10 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
 
         <div className="mt-4 flex justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel">
-            Cancel
+            Cancelar
           </Button>
           <Button onClick={handleSubmit} data-testid="button-save-record">
-            Save Record
+            Guardar Registro
           </Button>
         </div>
       </DialogContent>

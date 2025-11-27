@@ -12,43 +12,43 @@ interface Record {
   location: string;
 }
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const mockRecords: Record[] = [
   {
     id: "1",
-    date: "Nov 27, 2025",
-    vehicle: "Toyota Camry",
+    date: "27 Nov, 2025",
+    vehicle: "Toyota Corolla",
     type: "fuel",
     amount: "45.2 L",
-    cost: "$64.15",
-    location: "Shell Station - Main St",
+    cost: "₡31,640",
+    location: "Gasolinera Delta - San José",
   },
   {
     id: "2",
-    date: "Nov 25, 2025",
-    vehicle: "Tesla Model 3",
+    date: "25 Nov, 2025",
+    vehicle: "BYD Dolphin",
     type: "charge",
     amount: "52 kWh",
-    cost: "$18.20",
-    location: "Tesla Supercharger",
+    cost: "₡8,840",
+    location: "Estación CNFL - Escazú",
   },
   {
     id: "3",
-    date: "Nov 22, 2025",
-    vehicle: "Toyota Camry",
+    date: "22 Nov, 2025",
+    vehicle: "Toyota Corolla",
     type: "fuel",
     amount: "38.7 L",
-    cost: "$54.92",
-    location: "Chevron - Oak Ave",
+    cost: "₡27,090",
+    location: "Gasolinera Uno - Heredia",
   },
   {
     id: "4",
-    date: "Nov 20, 2025",
-    vehicle: "Ford F-150",
+    date: "20 Nov, 2025",
+    vehicle: "Mitsubishi L200",
     type: "fuel",
     amount: "68.5 L",
-    cost: "$97.27",
-    location: "Costco Gas",
+    cost: "₡47,950",
+    location: "Total - Alajuela",
   },
 ];
 
@@ -56,7 +56,7 @@ export function RecentRecords() {
   return (
     <Card data-testid="card-recent-records">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Recent Records</CardTitle>
+        <CardTitle className="text-base font-medium">Registros Recientes</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border">

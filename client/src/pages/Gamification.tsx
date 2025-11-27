@@ -14,9 +14,9 @@ const userStats = {
 };
 
 const rewards = [
-  { id: "1", name: "10% Off Premium Fuel", points: 500, available: true },
-  { id: "2", name: "Free Oil Change", points: 1500, available: true },
-  { id: "3", name: "Car Wash Voucher", points: 300, available: true },
+  { id: "1", name: "10% Descuento Combustible", points: 500, available: true },
+  { id: "2", name: "Cambio de Aceite Gratis", points: 1500, available: true },
+  { id: "3", name: "Lavado de Auto", points: 300, available: true },
 ];
 
 export default function Gamification() {
@@ -24,12 +24,12 @@ export default function Gamification() {
     <div className="space-y-6 p-6" data-testid="page-gamification">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Gamification</h1>
-          <p className="text-muted-foreground">Earn rewards by driving efficiently</p>
+          <h1 className="text-2xl font-bold">Gamificación</h1>
+          <p className="text-muted-foreground">Gana recompensas conduciendo eficientemente</p>
         </div>
         <Badge className="w-fit gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
           <Star className="h-3 w-3" />
-          Level {userStats.level}
+          Nivel {userStats.level}
         </Badge>
       </div>
 
@@ -41,7 +41,7 @@ export default function Gamification() {
             </div>
             <div>
               <p className="text-2xl font-bold">{userStats.totalPoints.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">Total Points</p>
+              <p className="text-sm text-muted-foreground">Puntos Totales</p>
             </div>
           </CardContent>
         </Card>
@@ -52,8 +52,8 @@ export default function Gamification() {
               <Star className="h-6 w-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">Level {userStats.level}</p>
-              <p className="text-sm text-muted-foreground">{userStats.nextLevel - userStats.totalPoints} pts to next</p>
+              <p className="text-2xl font-bold">Nivel {userStats.level}</p>
+              <p className="text-sm text-muted-foreground">{userStats.nextLevel - userStats.totalPoints} pts para subir</p>
             </div>
           </CardContent>
         </Card>
@@ -64,8 +64,8 @@ export default function Gamification() {
               <Zap className="h-6 w-6 text-orange-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{userStats.streak} days</p>
-              <p className="text-sm text-muted-foreground">Current Streak</p>
+              <p className="text-2xl font-bold">{userStats.streak} días</p>
+              <p className="text-sm text-muted-foreground">Racha Actual</p>
             </div>
           </CardContent>
         </Card>
@@ -77,7 +77,7 @@ export default function Gamification() {
             </div>
             <div>
               <p className="text-2xl font-bold">3</p>
-              <p className="text-sm text-muted-foreground">Available Rewards</p>
+              <p className="text-sm text-muted-foreground">Recompensas Disponibles</p>
             </div>
           </CardContent>
         </Card>
@@ -91,7 +91,7 @@ export default function Gamification() {
           <Leaderboard />
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Redeem Rewards</CardTitle>
+              <CardTitle className="text-base font-medium">Canjear Recompensas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {rewards.map((reward) => (
@@ -102,14 +102,14 @@ export default function Gamification() {
                 >
                   <div>
                     <p className="text-sm font-medium">{reward.name}</p>
-                    <p className="text-xs text-muted-foreground">{reward.points} points</p>
+                    <p className="text-xs text-muted-foreground">{reward.points} puntos</p>
                   </div>
                   <Button
                     size="sm"
                     disabled={userStats.totalPoints < reward.points}
                     data-testid={`button-redeem-${reward.id}`}
                   >
-                    Redeem
+                    Canjear
                   </Button>
                 </div>
               ))}

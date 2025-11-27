@@ -25,17 +25,17 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Add Record", url: "/register", icon: Camera },
-  { title: "Gamification", url: "/gamification", icon: Trophy },
-  { title: "Alerts", url: "/alerts", icon: Bell },
+  { title: "Panel Principal", url: "/", icon: LayoutDashboard },
+  { title: "Agregar Registro", url: "/register", icon: Camera },
+  { title: "Gamificación", url: "/gamification", icon: Trophy },
+  { title: "Alertas", url: "/alerts", icon: Bell },
   { title: "Marketplace", url: "/marketplace", icon: Store },
-  { title: "Fleet Mode", url: "/fleet", icon: Users },
+  { title: "Modo Flota", url: "/fleet", icon: Users },
 ];
 
 const secondaryItems = [
-  { title: "Settings", url: "/settings", icon: Settings },
-  { title: "Help", url: "/help", icon: HelpCircle },
+  { title: "Configuración", url: "/settings", icon: Settings },
+  { title: "Ayuda", url: "/help", icon: HelpCircle },
 ];
 
 export function AppSidebar() {
@@ -49,14 +49,14 @@ export function AppSidebar() {
             <Fuel className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold text-sidebar-foreground">FuelSmart</span>
-            <span className="text-xs text-sidebar-foreground/60">Energy Management</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">FuelSmart CR</span>
+            <span className="text-xs text-sidebar-foreground/60">Gestión de Energía</span>
           </div>
         </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>Menú Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -73,7 +73,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupLabel>Soporte</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {secondaryItems.map((item) => (
@@ -93,11 +93,11 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">JD</AvatarFallback>
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm">CR</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-sidebar-foreground">John Doe</span>
-            <span className="text-xs text-sidebar-foreground/60">Premium Plan</span>
+            <span className="text-sm font-medium text-sidebar-foreground">Carlos Rodríguez</span>
+            <span className="text-xs text-sidebar-foreground/60">Plan Premium</span>
           </div>
         </div>
       </SidebarFooter>

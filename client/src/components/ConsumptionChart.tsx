@@ -9,27 +9,27 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const mockData = [
-  { month: "Jan", consumption: 180, cost: 256 },
-  { month: "Feb", consumption: 165, cost: 235 },
-  { month: "Mar", consumption: 190, cost: 270 },
-  { month: "Apr", consumption: 175, cost: 249 },
-  { month: "May", consumption: 200, cost: 284 },
-  { month: "Jun", consumption: 185, cost: 263 },
-  { month: "Jul", consumption: 210, cost: 299 },
-  { month: "Aug", consumption: 195, cost: 277 },
-  { month: "Sep", consumption: 170, cost: 242 },
-  { month: "Oct", consumption: 220, cost: 313 },
-  { month: "Nov", consumption: 205, cost: 292 },
-  { month: "Dec", consumption: 246, cost: 350 },
+  { month: "Ene", consumption: 180, cost: 126000 },
+  { month: "Feb", consumption: 165, cost: 115500 },
+  { month: "Mar", consumption: 190, cost: 133000 },
+  { month: "Abr", consumption: 175, cost: 122500 },
+  { month: "May", consumption: 200, cost: 140000 },
+  { month: "Jun", consumption: 185, cost: 129500 },
+  { month: "Jul", consumption: 210, cost: 147000 },
+  { month: "Ago", consumption: 195, cost: 136500 },
+  { month: "Sep", consumption: 170, cost: 119000 },
+  { month: "Oct", consumption: 220, cost: 154000 },
+  { month: "Nov", consumption: 205, cost: 143500 },
+  { month: "Dic", consumption: 246, cost: 172200 },
 ];
 
 export function ConsumptionChart() {
   return (
     <Card data-testid="chart-consumption">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Fuel Consumption Trends</CardTitle>
+        <CardTitle className="text-base font-medium">Tendencias de Consumo de Combustible</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px]">
@@ -62,6 +62,7 @@ export function ConsumptionChart() {
                   fontSize: "12px",
                 }}
                 labelStyle={{ color: "hsl(var(--foreground))" }}
+                formatter={(value: number) => [`${value} L`, "Consumo"]}
               />
               <Area
                 type="monotone"
@@ -69,7 +70,7 @@ export function ConsumptionChart() {
                 stroke="hsl(162, 72%, 45%)"
                 strokeWidth={2}
                 fill="url(#colorConsumption)"
-                name="Consumption (L)"
+                name="Consumo (L)"
               />
             </AreaChart>
           </ResponsiveContainer>

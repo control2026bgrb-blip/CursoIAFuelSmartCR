@@ -33,20 +33,20 @@ interface FleetKPI {
   trend: "up" | "down";
 }
 
-// todo: remove mock functionality
+// todo: remove mock functionality - datos de Costa Rica
 const mockFleetVehicles: FleetVehicle[] = [
-  { id: "1", name: "Toyota Camry", plate: "FLT-001", driver: "John Smith", driverInitials: "JS", status: "active", efficiency: 85, monthlySpend: 245, alerts: 0 },
-  { id: "2", name: "Ford Transit", plate: "FLT-002", driver: "Maria Garcia", driverInitials: "MG", status: "active", efficiency: 72, monthlySpend: 380, alerts: 1 },
-  { id: "3", name: "Honda Accord", plate: "FLT-003", driver: "David Lee", driverInitials: "DL", status: "maintenance", efficiency: 0, monthlySpend: 120, alerts: 2 },
-  { id: "4", name: "Chevrolet Bolt", plate: "FLT-004", driver: "Sarah Chen", driverInitials: "SC", status: "active", efficiency: 92, monthlySpend: 85, alerts: 0 },
-  { id: "5", name: "Ford F-150", plate: "FLT-005", driver: "Mike Johnson", driverInitials: "MJ", status: "idle", efficiency: 65, monthlySpend: 290, alerts: 1 },
+  { id: "1", name: "Toyota Hilux", plate: "SJO-123", driver: "Juan Pérez", driverInitials: "JP", status: "active", efficiency: 85, monthlySpend: 245000, alerts: 0 },
+  { id: "2", name: "Hyundai H1", plate: "HER-456", driver: "María García", driverInitials: "MG", status: "active", efficiency: 72, monthlySpend: 380000, alerts: 1 },
+  { id: "3", name: "Nissan NP300", plate: "ALA-789", driver: "David Mora", driverInitials: "DM", status: "maintenance", efficiency: 0, monthlySpend: 120000, alerts: 2 },
+  { id: "4", name: "BYD T3", plate: "CAR-012", driver: "Sara Solís", driverInitials: "SS", status: "active", efficiency: 92, monthlySpend: 85000, alerts: 0 },
+  { id: "5", name: "Mitsubishi L200", plate: "LIB-345", driver: "Miguel Rojas", driverInitials: "MR", status: "idle", efficiency: 65, monthlySpend: 290000, alerts: 1 },
 ];
 
 const mockKPIs: FleetKPI[] = [
-  { label: "Total Vehicles", value: "12", change: "+2 this quarter", trend: "up" },
-  { label: "Monthly Fuel Cost", value: "$4,280", change: "-8% vs last month", trend: "down" },
-  { label: "Avg Efficiency", value: "78%", change: "+5% improvement", trend: "down" },
-  { label: "Active Alerts", value: "4", change: "2 critical", trend: "up" },
+  { label: "Total Vehículos", value: "12", change: "+2 este trimestre", trend: "up" },
+  { label: "Costo Mensual", value: "₡2.1M", change: "-8% vs mes anterior", trend: "down" },
+  { label: "Eficiencia Prom.", value: "78%", change: "+5% mejora", trend: "down" },
+  { label: "Alertas Activas", value: "4", change: "2 críticas", trend: "up" },
 ];
 
 const statusColors = {
@@ -55,26 +55,32 @@ const statusColors = {
   idle: "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400",
 };
 
+const statusLabels = {
+  active: "Activo",
+  maintenance: "En Taller",
+  idle: "Inactivo",
+};
+
 export function FleetDashboard() {
   return (
     <div className="space-y-6" data-testid="fleet-dashboard">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Fleet Management</h2>
-          <p className="text-sm text-muted-foreground">Monitor and manage your vehicle fleet</p>
+          <h2 className="text-xl font-semibold">Gestión de Flota</h2>
+          <p className="text-sm text-muted-foreground">Monitorea y administra tu flota de vehículos</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" data-testid="button-fleet-filter">
             <Filter className="mr-2 h-4 w-4" />
-            Filter
+            Filtrar
           </Button>
           <Button variant="outline" data-testid="button-export-report">
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Exportar
           </Button>
           <Button data-testid="button-add-vehicle">
             <Car className="mr-2 h-4 w-4" />
-            Add Vehicle
+            Agregar
           </Button>
         </div>
       </div>
@@ -104,12 +110,12 @@ export function FleetDashboard() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base font-medium">Fleet Vehicles</CardTitle>
+            <CardTitle className="text-base font-medium">Vehículos de Flota</CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="outline">{mockFleetVehicles.length} vehicles</Badge>
+              <Badge variant="outline">{mockFleetVehicles.length} vehículos</Badge>
               <Button size="sm" variant="ghost">
                 <FileText className="mr-1 h-4 w-4" />
-                Detailed Report
+                Reporte Detallado
               </Button>
             </div>
           </div>
@@ -119,12 +125,12 @@ export function FleetDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-sm">
-                  <th className="px-4 py-3 font-medium">Vehicle</th>
-                  <th className="px-4 py-3 font-medium">Driver</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Efficiency</th>
-                  <th className="px-4 py-3 font-medium">Monthly Spend</th>
-                  <th className="px-4 py-3 font-medium">Alerts</th>
+                  <th className="px-4 py-3 font-medium">Vehículo</th>
+                  <th className="px-4 py-3 font-medium">Conductor</th>
+                  <th className="px-4 py-3 font-medium">Estado</th>
+                  <th className="px-4 py-3 font-medium">Eficiencia</th>
+                  <th className="px-4 py-3 font-medium">Gasto Mensual</th>
+                  <th className="px-4 py-3 font-medium">Alertas</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -151,7 +157,7 @@ export function FleetDashboard() {
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="secondary" className={statusColors[vehicle.status]}>
-                        {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
+                        {statusLabels[vehicle.status]}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
@@ -165,13 +171,13 @@ export function FleetDashboard() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-medium">${vehicle.monthlySpend}</span>
+                      <span className="font-medium">₡{vehicle.monthlySpend.toLocaleString()}</span>
                     </td>
                     <td className="px-4 py-3">
                       {vehicle.alerts > 0 ? (
                         <Badge variant="destructive">{vehicle.alerts}</Badge>
                       ) : (
-                        <span className="text-sm text-muted-foreground">None</span>
+                        <span className="text-sm text-muted-foreground">Ninguna</span>
                       )}
                     </td>
                   </tr>

@@ -20,7 +20,7 @@ export default function Register() {
   const [scanComplete, setScanComplete] = useState(false);
   const { toast } = useToast();
 
-  // todo: remove mock functionality
+  // todo: remove mock functionality - datos de Costa Rica
   const [formData, setFormData] = useState({
     vehicle: "",
     liters: "",
@@ -37,25 +37,25 @@ export default function Register() {
       setIsScanning(false);
       setScanComplete(true);
       setFormData({
-        vehicle: "Toyota Camry",
+        vehicle: "Toyota Corolla",
         liters: "45.2",
-        price: "1.42",
-        totalCost: "64.18",
+        price: "700",
+        totalCost: "31640",
         odometer: "45,320",
-        station: "Shell Station - Main St",
+        station: "Gasolinera Delta - Escazú",
         date: new Date().toISOString().split("T")[0],
       });
       toast({
-        title: "Receipt scanned successfully",
-        description: "Data extracted from your receipt",
+        title: "Recibo escaneado exitosamente",
+        description: "Datos extraídos del recibo",
       });
     }, 2000);
   };
 
   const handleSubmit = () => {
     toast({
-      title: "Record added",
-      description: "Your fuel record has been saved successfully",
+      title: "Registro agregado",
+      description: "Tu registro de combustible ha sido guardado",
     });
     setScanComplete(false);
     setFormData({
@@ -72,15 +72,15 @@ export default function Register() {
   return (
     <div className="space-y-6 p-6" data-testid="page-register">
       <div>
-        <h1 className="text-2xl font-bold">Add Record</h1>
-        <p className="text-muted-foreground">Register a new fuel or charging record</p>
+        <h1 className="text-2xl font-bold">Agregar Registro</h1>
+        <p className="text-muted-foreground">Registra una nueva carga de combustible o electricidad</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Choose Input Method</CardTitle>
-            <CardDescription>Select how you want to add your record</CardDescription>
+            <CardTitle className="text-lg">Método de Ingreso</CardTitle>
+            <CardDescription>Selecciona cómo quieres agregar tu registro</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={method} onValueChange={setMethod}>
@@ -110,24 +110,24 @@ export default function Register() {
                       {isScanning ? (
                         <>
                           <div className="mb-4 h-20 w-20 animate-pulse rounded-full bg-primary/20" />
-                          <p className="text-sm font-medium">Scanning receipt...</p>
-                          <p className="text-xs text-muted-foreground">Extracting data using AI</p>
+                          <p className="text-sm font-medium">Escaneando recibo...</p>
+                          <p className="text-xs text-muted-foreground">Extrayendo datos con IA</p>
                         </>
                       ) : (
                         <>
                           <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
-                          <h3 className="font-medium">Upload Receipt Photo</h3>
+                          <h3 className="font-medium">Subir Foto del Recibo</h3>
                           <p className="mb-4 text-sm text-muted-foreground">
-                            Our AI will automatically extract liters, price, date & odometer
+                            Nuestra IA extraerá automáticamente litros, precio, fecha y kilometraje
                           </p>
                           <div className="flex gap-2">
                             <Button onClick={handleScan} data-testid="button-take-photo">
                               <Camera className="mr-2 h-4 w-4" />
-                              Take Photo
+                              Tomar Foto
                             </Button>
                             <Button variant="outline" onClick={handleScan} data-testid="button-upload">
                               <Upload className="mr-2 h-4 w-4" />
-                              Upload
+                              Subir
                             </Button>
                           </div>
                         </>
@@ -138,8 +138,8 @@ export default function Register() {
                       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                         <Check className="h-8 w-8 text-green-600" />
                       </div>
-                      <h3 className="font-medium text-green-600">Data Extracted Successfully</h3>
-                      <p className="text-sm text-muted-foreground">Review the data below and save</p>
+                      <h3 className="font-medium text-green-600">Datos Extraídos Exitosamente</h3>
+                      <p className="text-sm text-muted-foreground">Revisa los datos abajo y guarda</p>
                     </div>
                   )}
                 </div>
@@ -149,13 +149,13 @@ export default function Register() {
                 <div className="rounded-lg border-2 border-dashed p-8">
                   <div className="flex flex-col items-center text-center">
                     <QrCode className="mb-4 h-12 w-12 text-muted-foreground" />
-                    <h3 className="font-medium">Scan Station QR Code</h3>
+                    <h3 className="font-medium">Escanear Código QR de Gasolinera</h3>
                     <p className="mb-4 text-sm text-muted-foreground">
-                      Point your camera at the QR code at the pump
+                      Apunta tu cámara al código QR en la bomba
                     </p>
                     <Button onClick={handleScan} data-testid="button-scan-qr">
                       <Smartphone className="mr-2 h-4 w-4" />
-                      Open Camera
+                      Abrir Cámara
                     </Button>
                   </div>
                 </div>
@@ -165,13 +165,13 @@ export default function Register() {
                 <div className="rounded-lg border-2 border-dashed p-8">
                   <div className="flex flex-col items-center text-center">
                     <Bluetooth className="mb-4 h-12 w-12 text-muted-foreground" />
-                    <h3 className="font-medium">Connect OBD-II Device</h3>
+                    <h3 className="font-medium">Conectar Dispositivo OBD-II</h3>
                     <p className="mb-4 text-sm text-muted-foreground">
-                      Get real-time data directly from your vehicle's computer
+                      Obtén datos en tiempo real directamente de la computadora de tu vehículo
                     </p>
                     <Button variant="outline" data-testid="button-pair-obd">
                       <Bluetooth className="mr-2 h-4 w-4" />
-                      Pair Device
+                      Emparejar Dispositivo
                     </Button>
                   </div>
                 </div>
@@ -179,7 +179,7 @@ export default function Register() {
 
               <TabsContent value="manual" className="mt-6">
                 <p className="text-sm text-muted-foreground">
-                  Enter all details manually using the form on the right
+                  Ingresa todos los detalles manualmente usando el formulario a la derecha
                 </p>
               </TabsContent>
             </Tabs>
@@ -188,29 +188,29 @@ export default function Register() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Record Details</CardTitle>
-            <CardDescription>Review and complete the fuel record</CardDescription>
+            <CardTitle className="text-lg">Detalles del Registro</CardTitle>
+            <CardDescription>Revisa y completa el registro de combustible</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="vehicle">Vehicle</Label>
+                <Label htmlFor="vehicle">Vehículo</Label>
                 <Select
                   value={formData.vehicle}
                   onValueChange={(v) => setFormData({ ...formData, vehicle: v })}
                 >
                   <SelectTrigger id="vehicle" data-testid="select-vehicle">
-                    <SelectValue placeholder="Select vehicle" />
+                    <SelectValue placeholder="Seleccionar vehículo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Toyota Camry">Toyota Camry</SelectItem>
-                    <SelectItem value="Tesla Model 3">Tesla Model 3</SelectItem>
-                    <SelectItem value="Ford F-150">Ford F-150</SelectItem>
+                    <SelectItem value="Toyota Corolla">Toyota Corolla</SelectItem>
+                    <SelectItem value="BYD Dolphin">BYD Dolphin</SelectItem>
+                    <SelectItem value="Mitsubishi L200">Mitsubishi L200</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date">Fecha</Label>
                 <Input
                   id="date"
                   type="date"
@@ -223,7 +223,7 @@ export default function Register() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="liters">Liters</Label>
+                <Label htmlFor="liters">Litros</Label>
                 <Input
                   id="liters"
                   type="number"
@@ -234,22 +234,22 @@ export default function Register() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price/L ($)</Label>
+                <Label htmlFor="price">Precio/L (₡)</Label>
                 <Input
                   id="price"
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   data-testid="input-price"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="total">Total ($)</Label>
+                <Label htmlFor="total">Total (₡)</Label>
                 <Input
                   id="total"
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0"
                   value={formData.totalCost}
                   onChange={(e) => setFormData({ ...formData, totalCost: e.target.value })}
                   data-testid="input-total"
@@ -259,20 +259,20 @@ export default function Register() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="odometer">Odometer (km)</Label>
+                <Label htmlFor="odometer">Kilometraje</Label>
                 <Input
                   id="odometer"
-                  placeholder="Current mileage"
+                  placeholder="Kilometraje actual"
                   value={formData.odometer}
                   onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
                   data-testid="input-odometer"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="station">Station</Label>
+                <Label htmlFor="station">Gasolinera</Label>
                 <Input
                   id="station"
-                  placeholder="Gas station name"
+                  placeholder="Nombre de gasolinera"
                   value={formData.station}
                   onChange={(e) => setFormData({ ...formData, station: e.target.value })}
                   data-testid="input-station"
@@ -296,10 +296,10 @@ export default function Register() {
                 }
                 data-testid="button-clear"
               >
-                Clear
+                Limpiar
               </Button>
               <Button onClick={handleSubmit} data-testid="button-save">
-                Save Record
+                Guardar Registro
               </Button>
             </div>
           </CardContent>

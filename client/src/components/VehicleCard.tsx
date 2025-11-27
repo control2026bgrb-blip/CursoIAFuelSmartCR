@@ -20,10 +20,10 @@ interface VehicleCardProps {
 }
 
 const fuelTypeLabels = {
-  gasoline: "Gasoline",
-  diesel: "Diesel",
-  electric: "Electric",
-  hybrid: "Hybrid",
+  gasoline: "Gasolina",
+  diesel: "Diésel",
+  electric: "Eléctrico",
+  hybrid: "Híbrido",
 };
 
 const fuelTypeColors = {
@@ -66,9 +66,9 @@ export function VehicleCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>View History</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
+              <DropdownMenuItem>Editar</DropdownMenuItem>
+              <DropdownMenuItem>Ver Historial</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -83,7 +83,7 @@ export function VehicleCard({
           </Badge>
         </div>
         {lastFill && (
-          <p className="mt-3 text-xs text-muted-foreground">Last fill: {lastFill}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Última carga: {lastFill}</p>
         )}
       </CardContent>
     </Card>

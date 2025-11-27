@@ -13,9 +13,9 @@ interface EcoMetric {
 // todo: remove mock functionality
 const mockEcoScore = 78;
 const mockMetrics: EcoMetric[] = [
-  { label: "Driving Efficiency", value: 82, max: 100, icon: Wind, color: "text-blue-500" },
-  { label: "Fuel Economy", value: 75, max: 100, icon: Droplets, color: "text-cyan-500" },
-  { label: "CO₂ Reduction", value: 68, max: 100, icon: Trees, color: "text-green-500" },
+  { label: "Eficiencia de Conducción", value: 82, max: 100, icon: Wind, color: "text-blue-500" },
+  { label: "Economía de Combustible", value: 75, max: 100, icon: Droplets, color: "text-cyan-500" },
+  { label: "Reducción de CO₂", value: 68, max: 100, icon: Trees, color: "text-green-500" },
 ];
 
 export function EcoScoreCard() {
@@ -28,10 +28,10 @@ export function EcoScoreCard() {
 
   const scoreLabel =
     mockEcoScore >= 80
-      ? "Excellent"
+      ? "Excelente"
       : mockEcoScore >= 60
-        ? "Good"
-        : "Needs Improvement";
+        ? "Bueno"
+        : "Necesita Mejorar";
 
   return (
     <Card data-testid="eco-score-card">
@@ -40,7 +40,7 @@ export function EcoScoreCard() {
           <CardTitle className="text-base font-medium">Eco Score</CardTitle>
           <div className="flex items-center gap-1 text-xs text-green-600">
             <TrendingUp className="h-3 w-3" />
-            <span>+5 this month</span>
+            <span>+5 este mes</span>
           </div>
         </div>
       </CardHeader>
@@ -95,7 +95,7 @@ export function EcoScoreCard() {
 
         <div className="mt-4 rounded-md bg-accent/50 p-3">
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium">Carbon Footprint:</span> You've saved 45 kg CO₂ this month by driving efficiently. That's equivalent to planting 2 trees!
+            <span className="font-medium">Huella de Carbono:</span> Has ahorrado 45 kg de CO₂ este mes conduciendo eficientemente. ¡Equivale a plantar 2 árboles!
           </p>
         </div>
       </CardContent>
