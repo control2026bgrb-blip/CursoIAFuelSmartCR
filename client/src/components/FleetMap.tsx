@@ -2,12 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation, AlertCircle, Zap, PauseCircle, Power, RefreshCw } from "lucide-react";
-import hiluxImg from "@assets/generated_images/white_toyota_hilux_pickup_truck.png";
-import hyundaiImg from "@assets/generated_images/silver_hyundai_h1_minibus_van.png";
-import nissanImg from "@assets/generated_images/gray_nissan_np300_pickup_truck.png";
-import bydImg from "@assets/generated_images/blue_byd_t3_electric_vehicle.png";
-import mitsubishiImg from "@assets/generated_images/red_mitsubishi_l200_pickup_truck.png";
+import { MapPin, Navigation, AlertCircle, Zap, PauseCircle, Power, RefreshCw, Truck, Bus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type VehicleState = "moving" | "charging" | "stopped" | "off" | "breakdown";
@@ -23,7 +18,8 @@ interface MapVehicle {
   speed?: number;
   battery?: number;
   lastUpdate: string;
-  image: string;
+  icon: LucideIcon;
+  color: string;
 }
 
 // Área de San José, Costa Rica - coordenadas reales
@@ -46,7 +42,8 @@ const initialVehicles: MapVehicle[] = [
     state: "moving",
     speed: 45,
     lastUpdate: "Ahora",
-    image: hiluxImg,
+    icon: Truck,
+    color: "bg-blue-100 dark:bg-blue-900/30",
   },
   {
     id: "2",
@@ -58,7 +55,8 @@ const initialVehicles: MapVehicle[] = [
     state: "charging",
     battery: 65,
     lastUpdate: "Ahora",
-    image: hyundaiImg,
+    icon: Bus,
+    color: "bg-purple-100 dark:bg-purple-900/30",
   },
   {
     id: "3",
@@ -69,7 +67,8 @@ const initialVehicles: MapVehicle[] = [
     lng: -84.1054,
     state: "breakdown",
     lastUpdate: "Hace 15 min",
-    image: nissanImg,
+    icon: Truck,
+    color: "bg-gray-100 dark:bg-gray-800/50",
   },
   {
     id: "4",
@@ -80,7 +79,8 @@ const initialVehicles: MapVehicle[] = [
     lng: -84.0853,
     state: "stopped",
     lastUpdate: "Ahora",
-    image: bydImg,
+    icon: Zap,
+    color: "bg-green-100 dark:bg-green-900/30",
   },
   {
     id: "5",
@@ -91,7 +91,8 @@ const initialVehicles: MapVehicle[] = [
     lng: -84.0768,
     state: "off",
     lastUpdate: "Hace 30 min",
-    image: mitsubishiImg,
+    icon: Truck,
+    color: "bg-red-100 dark:bg-red-900/30",
   },
 ];
 
@@ -389,12 +390,9 @@ export function FleetMap() {
                     data-testid={`vehicle-panel-${vehicle.id}`}
                   >
                     <div className="flex items-start gap-2 mb-2">
-                      <img 
-                        src={vehicle.image} 
-                        alt={vehicle.name}
-                        className="h-12 w-12 rounded-md object-cover border border-border flex-shrink-0"
-                        data-testid={`map-vehicle-image-${vehicle.id}`}
-                      />
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-md ${vehicle.color} flex-shrink-0`}>
+                        <vehicle.icon className="h-5 w-5" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-tight">{vehicle.name}</p>
                         <p className="text-xs text-muted-foreground">{vehicle.plate}</p>
