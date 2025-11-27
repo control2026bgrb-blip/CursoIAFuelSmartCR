@@ -1,0 +1,92 @@
+{
+  "project_name": "Gestión Inteligente de Energía para Vehículos",
+  "goal": "Generar un prototipo funcional interactivo de una aplicación web multiplataforma para usuarios individuales, empresas y gasolineras.",
+  "platform": {
+    "type": "web",
+    "responsive": true,
+    "scalable": true,
+    "internationalization": true
+  },
+  "features": {
+    "registration": {
+      "methods": [
+        "OCR avanzado para foto de recibo (litros, precio, fecha, kilometraje)",
+        "Integración QR/código de barras con gasolineras",
+        "Conexión OBD-II/Bluetooth para datos en tiempo real",
+        "API para fabricantes de autos eléctricos"
+      ]
+    },
+    "dashboard": {
+      "visualizations": [
+        "Consumo mensual",
+        "Costo promedio",
+        "Tendencias históricas",
+        "Comparativas entre vehículos",
+        "Eco-score y huella de carbono"
+      ]
+    },
+    "gamification": {
+      "elements": [
+        "Retos de eficiencia",
+        "Insignias",
+        "Ranking",
+        "Recompensas canjeables en estaciones aliadas"
+      ]
+    },
+    "predictive_intelligence": {
+      "alerts": [
+        "Anomalías y predicción de fallas/mantenimiento",
+        "Cuándo cargar combustible según precios y patrones"
+      ],
+      "recommendations": [
+        "Eco-driving",
+        "Mejores precios",
+        "Rutas eficientes"
+      ]
+    },
+    "enterprise_mode": {
+      "functions": [
+        "Gestión multiusuario",
+        "Reportes contables",
+        "Exportación a SAP/QuickBooks",
+        "KPIs y alertas en tiempo real"
+      ]
+    },
+    "marketplace": {
+      "offers": [
+        "Talleres",
+        "Estaciones de carga",
+        "Promociones de aliados"
+      ]
+    }
+  },
+  "security": {
+    "authentication": "segura",
+    "cloud_backup": true,
+    "sync_devices": true
+  },
+  "business_model": {
+    "freemium": "Funciones básicas gratis",
+    "premium": "$4.99/mes (IA, eco-score, gamificación avanzada)",
+    "enterprise": "$50-$200/mes (flotas, reportes fiscales)",
+    "alliances": "Revenue share con gasolineras y publicidad"
+  },
+  "prototype_requirements": {
+    "screens": [
+      "Registro (OCR y QR)",
+      "Dashboard",
+      "Gamificación",
+      "Alertas Predictivas",
+      "Marketplace",
+      "Modo Flota"
+    ],
+    "navigation": "fluida entre módulos",
+    "data": "simulación de datos reales (consumo, precios, alertas)",
+    "design": {
+      "style": "moderno, intuitivo, atractivo",
+      "colors": "paleta profesional y amigable",
+      "typography": "legible y elegante"
+    }
+  },
+  "output": "Prototipo funcional interactivo con flujo completo y diseño visual"
+}
