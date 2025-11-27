@@ -139,7 +139,6 @@ export function FleetMap() {
         prev.map((vehicle) => {
           // Vehículos en movimiento se mueven en patrones realistas
           if (vehicle.state === "moving") {
-            // Movimiento más realista con dirección
             const direction = parseInt(vehicle.id) % 4;
             let latChange = 0;
             let lngChange = 0;
@@ -163,11 +162,9 @@ export function FleetMap() {
                 break;
             }
 
-            // Agregar algo de aleatoriedad
             latChange += (Math.random() - 0.5) * 0.0003;
             lngChange += (Math.random() - 0.5) * 0.0003;
 
-            // Mantener dentro de límites
             let newLat = vehicle.lat + latChange;
             let newLng = vehicle.lng + lngChange;
 
@@ -189,7 +186,6 @@ export function FleetMap() {
             };
           }
 
-          // Vehículos en carga aumentan batería lentamente
           if (vehicle.state === "charging" && vehicle.battery !== undefined) {
             const newBattery = Math.min(100, vehicle.battery + Math.random() * 3);
             return {
@@ -217,7 +213,7 @@ export function FleetMap() {
     setLastUpdateTime(new Date().toLocaleTimeString("es-CR"));
   };
 
-  // Convertir coordenadas a posición en el mapa (0-100%)
+  // Convertir coordenadas GPS a posición porcentual en el iframe
   const getMapPosition = (lat: number, lng: number) => {
     const latPercent =
       ((MAP_BOUNDS.north - lat) / (MAP_BOUNDS.north - MAP_BOUNDS.south)) * 100;
@@ -251,50 +247,36 @@ export function FleetMap() {
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid gap-4 lg:grid-cols-4">
-          {/* Mapa con vehículos simulados */}
+          {/* Mapa con vehículos superpuestos */}
           <div className="lg:col-span-3 rounded-lg border bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 p-6">
-            {/* Contenedor del mapa */}
-            <div className="relative w-full rounded-md overflow-hidden border shadow-sm mb-4 bg-white dark:bg-slate-900">
-              {/* Fondo del mapa con patrón de grid */}
-              <div className="absolute inset-0">
-                <div className="w-full h-full bg-gradient-to-br from-sky-100 to-cyan-100 dark:from-sky-950 dark:to-cyan-950">
-                  <div className="absolute inset-0 grid grid-cols-20 grid-rows-15 opacity-20">
-                    {Array.from({ length: 300 }).map((_, i) => (
-                      <div key={i} className="border border-slate-300 dark:border-slate-700" />
-                    ))}
-                  </div>
-                  {/* Carreteras simuladas */}
-                  <svg
-                    className="absolute inset-0 w-full h-full opacity-30"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    <path d="M 0 40 Q 50 35 100 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-400" />
-                    <path d="M 30 0 L 35 100" stroke="currentColor" strokeWidth="0.8" fill="none" className="text-gray-400" />
-                    <path d="M 70 0 L 65 100" stroke="currentColor" strokeWidth="0.8" fill="none" className="text-gray-400" />
-                  </svg>
+            {/* Contenedor del mapa con Google Maps */}
+            <div className="relative w-full rounded-md overflow-hidden border shadow-sm mb-4">
+              {/* Google Maps iframe */}
+              <iframe
+                width="100%"
+                height="500"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d62887.92905151252!2d-84.10963784863279!3d9.92846000000000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8fa0e3a6000001cd%3A0x800917dfaa1c6cc!2sSan%20Jos%C3%A9%2C%20Costa%20Rica!5e0!3m2!1ses!2scr!4v1234567890`}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
 
-                  {/* Marcadores de estaciones de carga */}
-                  <div className="absolute top-1/4 left-1/3 w-6 h-6 rounded-full border-2 border-green-500 bg-green-100/50 flex items-center justify-center text-xs opacity-60">
-                    <Zap className="w-3 h-3 text-green-600" />
-                  </div>
-                  <div className="absolute bottom-1/3 right-1/4 w-6 h-6 rounded-full border-2 border-green-500 bg-green-100/50 flex items-center justify-center text-xs opacity-60">
-                    <Zap className="w-3 h-3 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Vehículos en el mapa */}
-              <div className="relative w-full h-96">
+              {/* Marcadores superpuestos en tiempo real */}
+              <div className="absolute inset-0 pointer-events-none">
                 {vehicles.map((vehicle) => {
                   const pos = getMapPosition(vehicle.lat, vehicle.lng);
                   const config = stateConfig[vehicle.state];
                   const Icon = config.icon;
 
                   return (
-                    <div
+                    <button
                       key={vehicle.id}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleVehicleSelect(vehicle);
+                      }}
+                      className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 pointer-events-auto"
                       style={{
                         top: `${pos.top}%`,
                         left: `${pos.left}%`,
@@ -304,14 +286,15 @@ export function FleetMap() {
                       {/* Pulso de animación */}
                       <div
                         className={`absolute inset-0 rounded-full opacity-50 animate-pulse ${config.bgColor}`}
-                        style={{ width: "32px", height: "32px", transform: "translate(-50%, -50%)" }}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          transform: "translate(-50%, -50%)",
+                        }}
                       />
                       {/* Marcador principal */}
-                      <button
-                        onClick={() => handleVehicleSelect(vehicle)}
-                        className={`relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 shadow-lg transition-all hover-elevate cursor-pointer ${
-                          config.bgColor
-                        } ${
+                      <div
+                        className={`relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-slate-900 shadow-lg hover-elevate cursor-pointer ${config.bgColor} ${
                           selectedVehicle?.id === vehicle.id
                             ? "ring-4 ring-primary scale-125"
                             : "hover:scale-110"
@@ -319,20 +302,10 @@ export function FleetMap() {
                         title={`${vehicle.name} - ${vehicle.plate}`}
                       >
                         <Icon className={`h-4 w-4 ${config.color}`} />
-                      </button>
-                      {/* Etiqueta del vehículo */}
-                      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 text-white text-xs px-2 py-1 rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                        {vehicle.plate}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
-              </div>
-
-              {/* Información de zoom y ubicación */}
-              <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-white/80 dark:bg-slate-900/80 px-2 py-1 rounded">
-                <p className="font-medium">San José, Costa Rica</p>
-                <p>GPS: Tiempo Real</p>
               </div>
             </div>
 
