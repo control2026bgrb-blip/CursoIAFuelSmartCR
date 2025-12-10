@@ -6,8 +6,4 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.tsbuildinfo
-dist/
-server/
-script/
 .replit
-*.md
