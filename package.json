@@ -14,7 +14,7 @@
     "db:test": "tsx script/test-db.ts",
     "api:test": "tsx script/test-api.ts",
     "admin:create": "tsx script/create-admin.ts",
-    "vercel-build": "npm run build",
+    "vercel-build": "npm run build:client",
     "verify-deployment": "tsx script/verify-deployment.ts",
     "prepare-deployment": "tsx script/prepare-deployment.ts"
   },
