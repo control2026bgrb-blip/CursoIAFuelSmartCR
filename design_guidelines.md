@@ -5,6 +5,8 @@
 **Selected System**: Material Design with healthcare-focused adaptations
 **Rationale**: Information-dense medical content requires clear hierarchy, excellent readability, and established trust patterns. Material Design provides robust components for complex data display while maintaining accessibility.
 
+Proyecto
+
 **Key Principles**:
 - Medical credibility through clean, professional aesthetics
 - Maximum readability for detailed case study content
