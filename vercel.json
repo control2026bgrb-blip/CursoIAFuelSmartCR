@@ -2,26 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.js",
+      "src": "dist/index.cjs",
       "use": "@vercel/node"
-    },
-    {
-      "src": "client/**/*",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "dist/index.cjs"
     },
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "dist/index.cjs"
     }
   ],
+  "env": {
+    "NODE_ENV": "production"
+  },
   "functions": {
-    "api/index.js": {
+    "dist/index.cjs": {
       "maxDuration": 30
     }
   }
