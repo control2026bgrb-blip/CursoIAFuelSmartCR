@@ -13,8 +13,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Database connection
-const sql = neon(process.env.DATABASE_URL);
-const db = drizzle(sql);
+console.log("🔍 Environment check:");
+console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("DATABASE_URL preview:", process.env.DATABASE_URL ? 
+  process.env.DATABASE_URL.substring(0, 30) + "..." : "undefined");
+
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL not found in environment variables");
+  console.error("Available env vars:", Object.keys(process.env).filter(key => 
+    key.includes('DATABASE') || key.includes('SUPABASE')
+  ));
+}
+
+let sql, db;
+try {
+  if (process.env.DATABASE_URL) {
+    sql = neon(process.env.DATABASE_URL);
+    db = drizzle(sql);
+    console.log("✅ Database connection initialized");
+  } else {
+    console.error("❌ Cannot initialize database - no DATABASE_URL");
+  }
+} catch (error) {
+  console.error("❌ Database initialization error:", error.message);
+}
 
 // Validation schemas
 const loginSchema = z.object({
@@ -25,6 +47,10 @@ const loginSchema = z.object({
 // User registration
 app.post("/api/auth/register", async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { username, password } = insertUserSchema.parse(req.body);
     
     // Check if user already exists
@@ -51,13 +77,17 @@ app.post("/api/auth/register", async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Database error: " + error.message });
   }
 });
 
 // User login
 app.post("/api/auth/login", async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { username, password } = loginSchema.parse(req.body);
     
     // Find user in database
@@ -81,7 +111,7 @@ app.post("/api/auth/login", async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Database error: " + error.message });
   }
 });
 
@@ -359,11 +389,48 @@ app.delete("/api/fuel-records/:id", async (req, res) => {
 
 // Basic API routes
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    database: !!process.env.DATABASE_URL ? "configured" : "missing",
+    environment: process.env.NODE_ENV || "development"
+  });
 });
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working on Vercel!" });
+app.get("/api/test", async (req, res) => {
+  try {
+    if (!db) {
+      return res.json({ 
+        message: "API is working but database not initialized",
+        database: false,
+        env_check: {
+          DATABASE_URL: !!process.env.DATABASE_URL,
+          NODE_ENV: process.env.NODE_ENV
+        }
+      });
+    }
+
+    // Try a simple database query
+    const result = await sql`SELECT 1 as test`;
+    
+    res.json({ 
+      message: "API and database are working!",
+      database: true,
+      test_query: result[0]
+    });
+  } catch (error) {
+    console.error("Database test error:", error);
+    res.json({ 
+      message: "API working but database error",
+      database: false,
+      error: error.message,
+      env_check: {
+        DATABASE_URL: !!process.env.DATABASE_URL,
+        DATABASE_URL_preview: process.env.DATABASE_URL ? 
+          process.env.DATABASE_URL.substring(0, 30) + "..." : "undefined"
+      }
+    });
+  }
 });
 
 // Migration endpoint (for testing on Vercel)
