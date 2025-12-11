@@ -28,7 +28,10 @@ if (!process.env.DATABASE_URL) {
 let sql, db;
 try {
   if (process.env.DATABASE_URL) {
-    sql = neon(process.env.DATABASE_URL);
+    // Configure neon with better options for serverless
+    sql = neon(process.env.DATABASE_URL, {
+      fetchConnectionCache: true,
+    });
     db = drizzle(sql);
     console.log("✅ Database connection initialized");
   } else {
@@ -411,7 +414,9 @@ app.get("/api/test", async (req, res) => {
     }
 
     // Try a simple database query
+    console.log("Attempting database query...");
     const result = await sql`SELECT 1 as test`;
+    console.log("Database query successful:", result);
     
     res.json({ 
       message: "API and database are working!",
@@ -420,14 +425,23 @@ app.get("/api/test", async (req, res) => {
     });
   } catch (error) {
     console.error("Database test error:", error);
+    console.error("Error details:", {
+      name: error.name,
+      message: error.message,
+      cause: error.cause,
+      stack: error.stack?.substring(0, 500)
+    });
+    
     res.json({ 
       message: "API working but database error",
       database: false,
       error: error.message,
+      error_name: error.name,
+      error_cause: error.cause?.toString(),
       env_check: {
         DATABASE_URL: !!process.env.DATABASE_URL,
         DATABASE_URL_preview: process.env.DATABASE_URL ? 
-          process.env.DATABASE_URL.substring(0, 30) + "..." : "undefined"
+          process.env.DATABASE_URL.substring(0, 40) + "..." : "undefined"
       }
     });
   }
