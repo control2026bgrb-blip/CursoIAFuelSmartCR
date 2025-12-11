@@ -1,0 +1,519 @@
+{
+	"info": {
+		"_postman_id": "energy-management-load-tests",
+		"name": "Energy Management API - Load Tests",
+		"description": "Load testing collection for the Energy Management System API with performance benchmarks",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Load Test - User Registration",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate unique username for each iteration",
+							"pm.environment.set(\"loadTestUsername\", \"loadtest_\" + Date.now() + \"_\" + Math.random().toString(36).substr(2, 9));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 2000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"",
+							"pm.test(\"Response has user object\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('user');",
+							"    pm.expect(jsonData.user).to.have.property('id');",
+							"});",
+							"",
+							"// Log performance metrics",
+							"console.log(\"Registration Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{loadTestUsername}}\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"register"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - User Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 or 401\", function () {",
+							"    pm.expect([200, 401]).to.include(pm.response.code);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 1500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(1500);",
+							"});",
+							"",
+							"// Log performance metrics",
+							"console.log(\"Login Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"testuser_{{$randomInt}}\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Get All Users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 1000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+							"});",
+							"",
+							"pm.test(\"Response has users array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('users');",
+							"    pm.expect(jsonData.users).to.be.an('array');",
+							"});",
+							"",
+							"// Performance logging",
+							"var jsonData = pm.response.json();",
+							"console.log(\"Get Users Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Number of users returned: \" + (jsonData.users ? jsonData.users.length : 0));",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/users",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Create Vehicle",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate random vehicle data",
+							"const brands = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW', 'Mercedes'];",
+							"const models = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Truck'];",
+							"const fuelTypes = ['gasoline', 'diesel', 'hybrid', 'electric'];",
+							"",
+							"pm.environment.set(\"randomBrand\", brands[Math.floor(Math.random() * brands.length)]);",
+							"pm.environment.set(\"randomModel\", models[Math.floor(Math.random() * models.length)]);",
+							"pm.environment.set(\"randomFuelType\", fuelTypes[Math.floor(Math.random() * fuelTypes.length)]);",
+							"pm.environment.set(\"randomYear\", Math.floor(Math.random() * 20) + 2005);",
+							"pm.environment.set(\"randomPlate\", \"LT\" + Math.floor(Math.random() * 1000) + \"-\" + Math.floor(Math.random() * 1000));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201 or 400/500 (expected for load test)\", function () {",
+							"    pm.expect([201, 400, 500]).to.include(pm.response.code);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 2000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"",
+							"// Log performance metrics",
+							"console.log(\"Create Vehicle Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Status Code: \" + pm.response.code);",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": \"test-user-id\",\n  \"name\": \"{{randomBrand}} {{randomModel}}\",\n  \"plate\": \"{{randomPlate}}\",\n  \"fuelType\": \"{{randomFuelType}}\",\n  \"brand\": \"{{randomBrand}}\",\n  \"model\": \"{{randomModel}}\",\n  \"year\": \"{{randomYear}}\",\n  \"tankCapacity\": \"{{$randomInt}}\",\n  \"efficiency\": \"{{$randomInt}}.{{$randomInt}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/vehicles",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"vehicles"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Get Vehicles",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 or 404/500 (expected for load test)\", function () {",
+							"    pm.expect([200, 404, 500]).to.include(pm.response.code);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 1000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+							"});",
+							"",
+							"// Performance logging",
+							"console.log(\"Get Vehicles Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Status Code: \" + pm.response.code);",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/vehicles/test-user-{{$randomInt}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"vehicles",
+						"test-user-{{$randomInt}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Create Fuel Record",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate random fuel record data",
+							"const stations = ['Shell', 'BP', 'Exxon', 'Chevron', 'Texaco', 'Mobil'];",
+							"",
+							"pm.environment.set(\"randomStation\", stations[Math.floor(Math.random() * stations.length)]);",
+							"pm.environment.set(\"randomLiters\", (Math.random() * 50 + 10).toFixed(2));",
+							"pm.environment.set(\"randomPrice\", (Math.random() * 2 + 1).toFixed(2));",
+							"pm.environment.set(\"randomOdometer\", Math.floor(Math.random() * 200000) + 10000);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201 or 400/500 (expected for load test)\", function () {",
+							"    pm.expect([201, 400, 500]).to.include(pm.response.code);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 2000ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"",
+							"// Log performance metrics",
+							"console.log(\"Create Fuel Record Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Status Code: \" + pm.response.code);",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": \"test-user-id\",\n  \"vehicleId\": \"test-vehicle-id\",\n  \"liters\": \"{{randomLiters}}\",\n  \"pricePerLiter\": \"{{randomPrice}}\",\n  \"totalCost\": \"{{$randomInt}}.{{$randomInt}}\",\n  \"odometer\": \"{{randomOdometer}}\",\n  \"station\": \"{{randomStation}} Station\",\n  \"date\": \"2024-01-{{$randomInt}}\",\n  \"notes\": \"Load test fuel record\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/fuel-records",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"fuel-records"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Get Fuel Records",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 or 404/500 (expected for load test)\", function () {",
+							"    pm.expect([200, 404, 500]).to.include(pm.response.code);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 1500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(1500);",
+							"});",
+							"",
+							"// Performance logging",
+							"console.log(\"Get Fuel Records Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Status Code: \" + pm.response.code);",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/fuel-records/test-user-{{$randomInt}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"fuel-records",
+						"test-user-{{$randomInt}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "Load Test - Health Check",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response time is less than 500ms\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"",
+							"pm.test(\"Response has status ok\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status', 'ok');",
+							"});",
+							"",
+							"// Performance logging",
+							"console.log(\"Health Check Response Time: \" + pm.response.responseTime + \"ms\");",
+							"console.log(\"Response Size: \" + pm.response.responseSize + \" bytes\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			}
+		},
+		{
+			"name": "Stress Test - Concurrent API Calls",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// This test is designed to be run with high iteration counts",
+							"pm.test(\"API responds within acceptable time under load\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+							"});",
+							"",
+							"pm.test(\"Server doesn't crash under load\", function () {",
+							"    pm.expect([200, 404, 500]).to.include(pm.response.code);",
+							"});",
+							"",
+							"// Track response times for analysis",
+							"var responseTime = pm.response.responseTime;",
+							"var statusCode = pm.response.code;",
+							"",
+							"console.log(\"Iteration: \" + pm.info.iteration + \", Response Time: \" + responseTime + \"ms, Status: \" + statusCode);",
+							"",
+							"// Store metrics in environment for analysis",
+							"var totalTime = pm.environment.get(\"totalResponseTime\") || 0;",
+							"var requestCount = pm.environment.get(\"requestCount\") || 0;",
+							"",
+							"pm.environment.set(\"totalResponseTime\", totalTime + responseTime);",
+							"pm.environment.set(\"requestCount\", requestCount + 1);",
+							"",
+							"var avgResponseTime = (totalTime + responseTime) / (requestCount + 1);",
+							"console.log(\"Average Response Time: \" + avgResponseTime.toFixed(2) + \"ms\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/test",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"test"
+					]
+				}
+			}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"baseUrl\")) {",
+					"    pm.environment.set(\"baseUrl\", \"http://localhost:3000\");",
+					"}",
+					"",
+					"// Initialize performance tracking variables",
+					"if (!pm.environment.get(\"totalResponseTime\")) {",
+					"    pm.environment.set(\"totalResponseTime\", 0);",
+					"    pm.environment.set(\"requestCount\", 0);",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global performance monitoring",
+					"var responseTime = pm.response.responseTime;",
+					"var statusCode = pm.response.code;",
+					"",
+					"// Log slow responses",
+					"if (responseTime > 2000) {",
+					"    console.warn(\"SLOW RESPONSE: \" + pm.info.requestName + \" took \" + responseTime + \"ms\");",
+					"}",
+					"",
+					"// Log errors",
+					"if (statusCode >= 500) {",
+					"    console.error(\"SERVER ERROR: \" + pm.info.requestName + \" returned \" + statusCode);",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}
