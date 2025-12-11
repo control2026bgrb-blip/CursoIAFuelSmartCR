@@ -260,9 +260,14 @@ app.post("/api/vehicles", async (req, res) => {
   } catch (error) {
     console.error("Create vehicle error:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid input", details: error.errors });
+      console.error("Validation errors:", error.errors);
+      return res.status(400).json({ 
+        error: "Invalid input", 
+        details: error.errors,
+        receivedData: req.body
+      });
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error: " + error.message });
   }
 });
 

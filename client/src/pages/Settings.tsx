@@ -137,8 +137,17 @@ export default function Settings() {
     }
 
     try {
+      // Map Spanish fuel types to English for API
+      const fuelTypeMap: { [key: string]: string } = {
+        "Gasolina": "gasoline",
+        "Diesel": "diesel", 
+        "Eléctrico": "electric",
+        "Híbrido": "hybrid"
+      };
+
       const vehicleData = {
         ...newVehicle,
+        fuelType: fuelTypeMap[newVehicle.fuelType] || "gasoline",
         isDefault: vehicles.length === 0,
       };
 

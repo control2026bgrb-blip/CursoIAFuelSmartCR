@@ -62,18 +62,22 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const insertVehicleSchema = createInsertSchema(vehicles).omit({
-  id: true,
-  userId: true,
-  isDefault: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  // Make some fields optional for the API
+export const insertVehicleSchema = z.object({
+  // Required fields
+  name: z.string().min(1, "Vehicle name is required"),
+  year: z.union([z.string(), z.number()]).transform(val => {
+    const parsed = parseInt(val.toString());
+    if (isNaN(parsed) || parsed < 1900 || parsed > new Date().getFullYear() + 2) {
+      throw new Error("Invalid year");
+    }
+    return parsed;
+  }),
+  
+  // Optional fields
   plate: z.string().optional(),
   brand: z.string().optional(), 
   model: z.string().optional(),
-  fuelType: z.string().optional(), // Map to 'type' in database
+  fuelType: z.enum(["gasoline", "diesel", "electric", "hybrid"]).optional().default("gasoline"),
   tankCapacity: z.string().optional(),
   efficiency: z.string().optional(), // Map to 'average_efficiency' in database
 });
