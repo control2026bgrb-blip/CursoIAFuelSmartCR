@@ -103,22 +103,26 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// User login
+// User login using Supabase client
 app.post("/api/auth/login", async (req, res) => {
   try {
-    if (!db) {
+    if (!supabase) {
       return res.status(500).json({ error: "Database not available" });
     }
 
     const { username, password } = loginSchema.parse(req.body);
     
     // Find user in database
-    const userResult = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    if (userResult.length === 0) {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    
+    if (error || !user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
     
-    const user = userResult[0];
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -140,10 +144,19 @@ app.post("/api/auth/login", async (req, res) => {
 // Get all users (for testing)
 app.get("/api/users", async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-    }).from(users);
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
+    const { data: allUsers, error } = await supabase
+      .from('users')
+      .select('id, username');
+    
+    if (error) {
+      console.error("Get users error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
+    }
+    
     res.json({ users: allUsers });
   } catch (error) {
     console.error("Get users error:", error);
