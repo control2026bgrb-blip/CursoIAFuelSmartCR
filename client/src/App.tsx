@@ -12,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import UserRegistration from "@/pages/UserRegistration";
+import Settings from "@/pages/Settings";
 import Gamification from "@/pages/Gamification";
 import Alerts from "@/pages/Alerts";
 import Marketplace from "@/pages/Marketplace";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={UserRegistration} />
+      <Route path="/settings" component={Settings} />
       <Route path="/gamification" component={Gamification} />
       <Route path="/alerts" component={Alerts} />
       <Route path="/marketplace" component={Marketplace} />
