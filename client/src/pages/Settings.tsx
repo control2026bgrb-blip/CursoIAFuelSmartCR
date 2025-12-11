@@ -148,7 +148,6 @@ export default function Settings() {
       const vehicleData = {
         ...newVehicle,
         fuelType: fuelTypeMap[newVehicle.fuelType] || "gasoline",
-        isDefault: vehicles.length === 0,
       };
 
       const response = await vehiclesAPI.createVehicle(currentUser.id, vehicleData);
@@ -195,35 +194,7 @@ export default function Settings() {
     }
   };
 
-  const handleSetDefault = async (id: string) => {
-    if (!currentUser?.id) return;
-    
-    try {
-      const vehicle = vehicles.find(v => v.id === id);
-      if (!vehicle) return;
-      
-      await vehiclesAPI.updateVehicle(id, currentUser.id, {
-        ...vehicle,
-        isDefault: true,
-      });
-      
-      setVehicles(vehicles.map(v => ({
-        ...v,
-        isDefault: v.id === id
-      })));
-      
-      toast({
-        title: "Vehículo predeterminado actualizado",
-        description: "Se ha establecido como vehículo predeterminado",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el vehículo: " + error.message,
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleSaveSettings = async () => {
     if (!currentUser?.id) return;
@@ -400,9 +371,6 @@ export default function Settings() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium">{vehicle.name}</h3>
-                          {vehicle.isDefault && (
-                            <Badge variant="secondary">Predeterminado</Badge>
-                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {vehicle.year} • {vehicle.fuelType}
@@ -412,15 +380,6 @@ export default function Settings() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {!vehicle.isDefault && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSetDefault(vehicle.id)}
-                        >
-                          Predeterminado
-                        </Button>
-                      )}
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>

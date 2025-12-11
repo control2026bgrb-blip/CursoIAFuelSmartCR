@@ -25,7 +25,6 @@ export const vehicles = pgTable("vehicles", {
   year: integer("year").notNull(),
   tankCapacity: decimal("tank_capacity"),
   averageEfficiency: decimal("average_efficiency"),
-  isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

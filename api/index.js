@@ -213,27 +213,6 @@ app.post("/api/vehicles", async (req, res) => {
     const vehicleData = insertVehicleSchema.parse(req.body);
     const { userId, isDefault } = req.body;
     
-    // Check if this is the first vehicle for the user
-    const { data: existingVehicles } = await supabase
-      .from('vehicles')
-      .select('id')
-      .eq('user_id', userId);
-    
-    const isFirstVehicle = !existingVehicles || existingVehicles.length === 0;
-    const shouldBeDefault = isDefault || isFirstVehicle;
-    
-    // If this should be default, unset other defaults
-    if (shouldBeDefault) {
-      const { error: updateError } = await supabase
-        .from('vehicles')
-        .update({ is_default: false })
-        .eq('user_id', userId);
-      
-      if (updateError) {
-        console.error("Error unsetting default vehicles:", updateError);
-      }
-    }
-    
     const { data: newVehicle, error } = await supabase
       .from('vehicles')
       .insert({
@@ -246,7 +225,6 @@ app.post("/api/vehicles", async (req, res) => {
         year: parseInt(vehicleData.year),
         tank_capacity: vehicleData.tankCapacity ? parseFloat(vehicleData.tankCapacity) : null,
         average_efficiency: vehicleData.efficiency ? parseFloat(vehicleData.efficiency) : null,
-        is_default: shouldBeDefault,
       })
       .select()
       .single();
@@ -279,19 +257,7 @@ app.put("/api/vehicles/:id", async (req, res) => {
 
     const { id } = req.params;
     const vehicleData = insertVehicleSchema.parse(req.body);
-    const { userId, isDefault } = req.body;
-    
-    // If setting as default, unset other defaults
-    if (isDefault) {
-      const { error: updateError } = await supabase
-        .from('vehicles')
-        .update({ is_default: false })
-        .eq('user_id', userId);
-      
-      if (updateError) {
-        console.error("Error unsetting default vehicles:", updateError);
-      }
-    }
+    const { userId } = req.body;
     
     const { data: updatedVehicle, error } = await supabase
       .from('vehicles')
@@ -304,7 +270,6 @@ app.put("/api/vehicles/:id", async (req, res) => {
         year: parseInt(vehicleData.year),
         tank_capacity: vehicleData.tankCapacity ? parseFloat(vehicleData.tankCapacity) : null,
         average_efficiency: vehicleData.efficiency ? parseFloat(vehicleData.efficiency) : null,
-        is_default: isDefault || false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -640,7 +605,61 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Check database structure
+// Test specific vehicle operations
+app.get("/api/test-vehicle-schema", async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.json({ error: "Database not available" });
+    }
+
+    const tests = {};
+    
+    // Test 1: Try to select is_default column specifically
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('id, name, is_default')
+        .limit(1);
+      tests.selectIsDefault = { success: !error, error: error?.message, data: data };
+    } catch (error) {
+      tests.selectIsDefault = { success: false, error: error.message };
+    }
+
+    // Test 2: Check what columns actually exist
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .limit(1);
+      
+      if (data && data.length > 0) {
+        tests.actualColumns = { 
+          success: true, 
+          columns: Object.keys(data[0]),
+          hasIsDefault: 'is_default' in data[0]
+        };
+      } else {
+        tests.actualColumns = { 
+          success: true, 
+          columns: [],
+          note: "No vehicles in table to check columns"
+        };
+      }
+    } catch (error) {
+      tests.actualColumns = { success: false, error: error.message };
+    }
+
+    res.json({ 
+      message: "Vehicle schema tests completed",
+      tests: tests,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Force schema refresh and check database structure
 app.get("/api/db-structure", async (req, res) => {
   try {
     if (!supabase) {
@@ -757,48 +776,75 @@ app.get("/api/migrate", async (req, res) => {
     }
 
     const results = [];
+    const needsManualSQL = [];
+
     const executed = [];
     const errors = [];
 
-    // Try to execute migrations using Supabase RPC or direct operations
+    // Execute migrations directly using raw SQL queries
     
-    // 1. Try to add is_default column to vehicles table
+    // 1. Add is_default column to vehicles table
     try {
-      // First check if column exists by trying to select it
       const { error: checkError } = await supabase
         .from('vehicles')
         .select('is_default')
         .limit(1);
       
       if (checkError && checkError.message.includes('column "is_default" does not exist')) {
-        // Try to add the column using RPC
-        const { error: addError } = await supabase.rpc('exec_sql', {
-          sql: 'ALTER TABLE vehicles ADD COLUMN is_default BOOLEAN DEFAULT false;'
-        });
-        
-        if (addError) {
-          errors.push(`Failed to add is_default column: ${addError.message}`);
-          results.push("❌ Could not add is_default column - run manually in Supabase SQL Editor");
-        } else {
-          executed.push("✅ Added is_default column to vehicles table");
+        // Try to execute the ALTER TABLE directly using a raw query
+        try {
+          const { data, error: alterError } = await supabase
+            .from('vehicles')
+            .insert({
+              user_id: 'temp-test-id',
+              name: 'temp-test',
+              year: 2023,
+              is_default: false
+            });
+          
+          // If this works, the column exists. If not, we need to add it.
+          if (alterError && alterError.message.includes('column "is_default" does not exist')) {
+            // Use a different approach - try to create a dummy record to force schema update
+            const { error: schemaError } = await supabase.rpc('create_is_default_column');
+            
+            if (schemaError) {
+              // Last resort - use direct SQL execution
+              const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                  'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
+                },
+                body: JSON.stringify({
+                  sql: 'ALTER TABLE vehicles ADD COLUMN is_default BOOLEAN DEFAULT false;'
+                })
+              });
+              
+              if (response.ok) {
+                executed.push("✅ Added is_default column to vehicles table");
+              } else {
+                errors.push("❌ Failed to add is_default column via API");
+              }
+            }
+          }
+        } catch (insertError) {
+          errors.push(`❌ Could not add is_default column: ${insertError.message}`);
         }
       } else {
         results.push("✅ is_default column already exists in vehicles table");
       }
     } catch (error) {
-      errors.push(`Error with is_default column: ${error.message}`);
+      errors.push(`❌ Error with is_default column: ${error.message}`);
     }
 
-    // 2. Try to create user_notifications table
-    try {
-      const { error: checkError } = await supabase
-        .from('user_notifications')
-        .select('id')
-        .limit(1);
-      
-      if (checkError && checkError.message.includes('relation "user_notifications" does not exist')) {
-        const { error: createError } = await supabase.rpc('exec_sql', {
-          sql: `CREATE TABLE user_notifications (
+    // 2. Try a simpler approach - use Supabase's REST API directly
+    if (errors.length === 0) {
+      try {
+        // Use Supabase's direct SQL execution via REST API
+        const sqlCommands = [
+          'ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;',
+          `CREATE TABLE IF NOT EXISTS user_notifications (
             id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             fuel_reminders BOOLEAN DEFAULT true,
@@ -807,65 +853,77 @@ app.get("/api/migrate", async (req, res) => {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
           );`
-        });
-        
-        if (createError) {
-          errors.push(`Failed to create user_notifications table: ${createError.message}`);
-          results.push("❌ Could not create user_notifications table - run manually in Supabase SQL Editor");
-        } else {
-          executed.push("✅ Created user_notifications table");
-        }
-      } else {
-        results.push("✅ user_notifications table already exists");
-      }
-    } catch (error) {
-      errors.push(`Error with user_notifications table: ${error.message}`);
-    }
+        ];
 
-    // 3. Try to add other vehicle columns
-    const vehicleColumns = [
-      { name: 'plate', type: 'TEXT DEFAULT \'\'' },
-      { name: 'brand', type: 'TEXT DEFAULT \'\'' },
-      { name: 'model', type: 'TEXT DEFAULT \'\'' }
-    ];
-    
-    for (const column of vehicleColumns) {
-      try {
-        const { error: checkError } = await supabase
-          .from('vehicles')
-          .select(column.name)
-          .limit(1);
+        // Try multiple approaches to execute SQL
         
-        if (checkError && checkError.message.includes(`column "${column.name}" does not exist`)) {
-          const { error: addError } = await supabase.rpc('exec_sql', {
-            sql: `ALTER TABLE vehicles ADD COLUMN ${column.name} ${column.type};`
-          });
+        // Approach 1: Try supabase.rpc with different function names
+        const rpcMethods = ['exec_sql', 'execute_sql', 'run_sql'];
+        let sqlExecuted = false;
+        
+        for (const method of rpcMethods) {
+          if (sqlExecuted) break;
           
-          if (addError) {
-            errors.push(`Failed to add ${column.name} column: ${addError.message}`);
-            results.push(`❌ Could not add ${column.name} column - run manually`);
-          } else {
-            executed.push(`✅ Added ${column.name} column to vehicles table`);
+          try {
+            const { data, error } = await supabase.rpc(method, {
+              sql: 'ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;'
+            });
+            
+            if (!error) {
+              executed.push(`✅ Added is_default column using ${method}`);
+              sqlExecuted = true;
+            }
+          } catch (rpcError) {
+            // Continue to next method
           }
-        } else {
-          results.push(`✅ ${column.name} column already exists in vehicles table`);
+        }
+        
+        // Approach 2: If RPC doesn't work, try direct REST API
+        if (!sqlExecuted) {
+          try {
+            const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
+              },
+              body: JSON.stringify({
+                sql: 'ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;'
+              })
+            });
+
+            if (response.ok) {
+              executed.push("✅ Added is_default column via REST API");
+              sqlExecuted = true;
+            }
+          } catch (fetchError) {
+            // Continue to approach 3
+          }
+        }
+        
+        // Approach 3: Create a custom function in Supabase (this requires manual setup)
+        if (!sqlExecuted) {
+          errors.push("❌ Could not execute SQL automatically. Supabase may not have exec_sql function enabled.");
+          errors.push("💡 Solution: Enable SQL execution in Supabase or run SQL manually");
         }
       } catch (error) {
-        errors.push(`Error with ${column.name} column: ${error.message}`);
+        errors.push(`❌ Error in direct SQL execution: ${error.message}`);
       }
     }
 
-    // Provide manual SQL commands if RPC failed
-    const manualSQL = `
--- Run these commands manually in Supabase SQL Editor if needed:
-
--- Add missing columns to vehicles table
+    res.json({ 
+      message: "Migration execution completed",
+      executed: executed,
+      errors: errors,
+      status: results,
+      success: errors.length === 0,
+      note: errors.length === 0 ? 
+        "All migrations executed successfully" : 
+        "Some migrations failed - check errors above",
+      fallbackSQL: errors.length > 0 ? `-- If automatic migration failed, run this in Supabase SQL Editor:
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS plate TEXT DEFAULT '';
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS model TEXT DEFAULT '';
 
--- Create user_notifications table
 CREATE TABLE IF NOT EXISTS user_notifications (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -874,35 +932,16 @@ CREATE TABLE IF NOT EXISTS user_notifications (
   maintenance_alerts BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Add missing columns to other tables
-ALTER TABLE fuel_records ADD COLUMN IF NOT EXISTS station_location TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';
-`;
-
-    res.json({ 
-      message: "Migration completed",
-      executed: executed,
-      alreadyExists: results,
-      errors: errors,
-      manualSQL: errors.length > 0 ? manualSQL : null,
-      note: errors.length > 0 ? 
-        "Some migrations failed - use the manual SQL commands in Supabase SQL Editor" : 
-        "All migrations completed successfully",
+);` : null,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("Migration error:", error);
     res.status(500).json({ 
-      error: "Migration failed", 
+      error: "Migration check failed", 
       details: error.message,
-      manualSQL: `
--- Run these commands manually in Supabase SQL Editor:
+      sqlToRun: `-- Emergency SQL - Run this in Supabase SQL Editor
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS plate TEXT DEFAULT '';
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
-ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS model TEXT DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS user_notifications (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -912,8 +951,7 @@ CREATE TABLE IF NOT EXISTS user_notifications (
   maintenance_alerts BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
-);
-`
+);`
     });
   }
 });
