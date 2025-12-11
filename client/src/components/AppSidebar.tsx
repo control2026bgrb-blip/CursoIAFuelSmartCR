@@ -1,4 +1,3 @@
-import { Link, useLocation } from "wouter";
 import {
   Sidebar,
   SidebarContent,
@@ -21,8 +20,13 @@ import {
   Settings,
   HelpCircle,
   Fuel,
+  LogOut,
+  UserPlus,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "wouter";
 
 const mainItems = [
   { title: "Panel Principal", url: "/", icon: LayoutDashboard },
@@ -39,7 +43,21 @@ const secondaryItems = [
 ];
 
 export function AppSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    setLocation("/login");
+  };
 
   return (
     <Sidebar>
@@ -91,15 +109,50 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">CR</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-sidebar-foreground">Carlos Rodríguez</span>
-            <span className="text-xs text-sidebar-foreground/60">Plan Premium</span>
+        {user ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  {user.username.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-sidebar-foreground">{user.username}</span>
+                <span className="text-xs text-sidebar-foreground/60">Fuel Tracker</span>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="w-full"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setLocation("/login")}
+              className="w-full"
+            >
+              Login
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLocation("/signup")}
+              className="w-full"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Sign Up
+            </Button>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

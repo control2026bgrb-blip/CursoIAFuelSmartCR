@@ -1,18 +1,59 @@
 import express from "express";
+import cors from "cors";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { users, insertUserSchema } from "../shared/schema.js";
 import { eq } from "drizzle-orm";
+import dotenv from "dotenv";
+import path from "path";
+
+// Load environment variables from root directory
+import path from "path";
+const envPath = path.resolve(process.cwd(), '.env');
+dotenv.config({ path: envPath });
 
 const app = express();
+const PORT = 3001;
 
-// Middleware
+// Manual CORS middleware (more reliable than cors package)
+app.use((req, res, next) => {
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  next();
+});
+
 // Database connection
+console.log("🔍 Environment check:");
+console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("DATABASE_URL preview:", process.env.DATABASE_URL ? 
+  process.env.DATABASE_URL.substring(0, 20) + "..." : "undefined");
+
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL not found in environment variables");
+  console.error("Make sure .env file exists and contains DATABASE_URL");
+  process.exit(1);
+}
+
 const sql = neon(process.env.DATABASE_URL);
 const db = drizzle(sql);
 
@@ -25,6 +66,8 @@ const loginSchema = z.object({
 // User registration
 app.post("/api/auth/register", async (req, res) => {
   try {
+    console.log("📝 Registration attempt:", req.body.username);
+    
     const { username, password } = insertUserSchema.parse(req.body);
     
     // Check if user already exists
@@ -42,12 +85,14 @@ app.post("/api/auth/register", async (req, res) => {
       password: hashedPassword,
     }).returning();
     
+    console.log("✅ User created:", newUser[0].username);
+    
     // Return user without password
     const { password: _, ...userResponse } = newUser[0];
     res.status(201).json({ user: userResponse });
     
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("❌ Registration error:", error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
     }
@@ -58,6 +103,8 @@ app.post("/api/auth/register", async (req, res) => {
 // User login
 app.post("/api/auth/login", async (req, res) => {
   try {
+    console.log("🔐 Login attempt:", req.body.username);
+    
     const { username, password } = loginSchema.parse(req.body);
     
     // Find user in database
@@ -72,12 +119,14 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
     
+    console.log("✅ Login successful:", user.username);
+    
     // Return user without password
     const { password: _, ...userResponse } = user;
     res.json({ user: userResponse });
     
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("❌ Login error:", error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
     }
@@ -94,30 +143,33 @@ app.get("/api/users", async (req, res) => {
     }).from(users);
     res.json({ users: allUsers });
   } catch (error) {
-    console.error("Get users error:", error);
+    console.error("❌ Get users error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// Basic API routes
+// Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    cors: "enabled",
+    environment: "development"
+  });
 });
 
+// Test endpoint
 app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working on Vercel!" });
+  res.json({ message: "CORS is working!" });
 });
 
-// Catch all API routes
-app.use("/api/*", (req, res) => {
-  res.status(404).json({ error: "API endpoint not found" });
+app.listen(PORT, () => {
+  console.log(`🚀 Local API server running on http://localhost:${PORT}`);
+  console.log(`📡 Database: ${process.env.DATABASE_URL?.split('@')[1]}`);
+  console.log(`🔧 Environment: DEVELOPMENT`);
+  console.log(`📋 Available endpoints:`);
+  console.log(`   POST http://localhost:${PORT}/api/auth/register`);
+  console.log(`   POST http://localhost:${PORT}/api/auth/login`);
+  console.log(`   GET  http://localhost:${PORT}/api/users`);
+  console.log(`   GET  http://localhost:${PORT}/api/health`);
 });
-
-// Error handler
-app.use((err, _req, res, _next) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(status).json({ message });
-});
-
-export default app;
