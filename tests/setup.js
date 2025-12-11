@@ -10,6 +10,21 @@ beforeAll(() => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 });
 
+// Mock matchMedia for tests
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Global mocks
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
