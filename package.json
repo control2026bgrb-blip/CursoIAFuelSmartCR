@@ -30,7 +30,14 @@
     "test:api": "vitest run tests/api/",
     "test:components": "vitest run tests/components/",
     "test:validation": "vitest run tests/validation/",
-    "test:integration": "vitest run tests/integration/"
+    "test:integration": "vitest run tests/integration/",
+    "test:a11y": "vitest run tests/accessibility/",
+    "test:hooks": "vitest run tests/hooks/",
+    "test:pages": "vitest run tests/pages/",
+    "test:client": "vitest run tests/components/ tests/hooks/ tests/pages/ tests/lib/",
+    "test:e2e": "vitest run tests/integration/",
+    "test:watch:components": "vitest --watch tests/components/",
+    "test:watch:integration": "vitest --watch tests/integration/"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -117,6 +124,8 @@
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
     "autoprefixer": "^10.4.20",
+    "jest-axe": "^8.0.0",
+    "axe-core": "^4.8.3",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
     "jsdom": "^27.3.0",

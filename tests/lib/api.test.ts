@@ -6,7 +6,7 @@ import {
   settingsAPI, 
   fuelRecordsAPI,
   API_ENDPOINTS 
-} from '@/lib/api';
+} from '../../client/src/lib/api';
 
 // Mock fetch
 const mockFetch = vi.fn();

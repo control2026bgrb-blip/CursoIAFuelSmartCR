@@ -75,7 +75,7 @@ export function AddRecordModal({ open, onOpenChange, onRecordAdded }: AddRecordM
     try {
       setLoadingVehicles(true);
       const response = await vehiclesAPI.getVehicles(currentUser.id);
-      setVehicles(response.data.vehicles);
+      setVehicles(response.data.vehicles||[]);
       
       // Auto-select first vehicle if available
       const firstVehicle = response.data.vehicles[0];

@@ -25,6 +25,13 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Mock ResizeObserver for tests
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
 // Global mocks
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
