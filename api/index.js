@@ -62,11 +62,21 @@ app.post("/api/auth/register", async (req, res) => {
     const { username, password } = insertUserSchema.parse(req.body);
     
     // Check if user already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id')
       .eq('username', username)
       .single();
+    
+    // If error is not "not found", it's a real error
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error("Error checking existing user:", checkError);
+      return res.status(500).json({ 
+        error: "Database error: " + checkError.message,
+        code: checkError.code,
+        hint: checkError.hint
+      });
+    }
     
     if (existingUser) {
       return res.status(400).json({ error: "Username already exists" });
@@ -87,7 +97,12 @@ app.post("/api/auth/register", async (req, res) => {
     
     if (error) {
       console.error("Supabase insert error:", error);
-      return res.status(500).json({ error: "Failed to create user: " + error.message });
+      return res.status(500).json({ 
+        error: "Failed to create user: " + error.message,
+        code: error.code,
+        hint: error.hint,
+        details: error.details
+      });
     }
     
     // Return user without password
@@ -442,6 +457,7 @@ app.get("/api/test", async (req, res) => {
         env_check: {
           SUPABASE_URL: !!process.env.SUPABASE_URL,
           SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+          SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
           NODE_ENV: process.env.NODE_ENV
         }
       });
@@ -461,7 +477,15 @@ app.get("/api/test", async (req, res) => {
         database: false,
         error: error.message,
         error_code: error.code,
-        error_details: error.details
+        error_details: error.details,
+        hint: error.hint,
+        env_check: {
+          SUPABASE_URL: !!process.env.SUPABASE_URL,
+          SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+          SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          service_key_preview: process.env.SUPABASE_SERVICE_ROLE_KEY ? 
+            process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 50) + "..." : "undefined"
+        }
       });
     }
     
@@ -482,7 +506,8 @@ app.get("/api/test", async (req, res) => {
       error_name: error.name,
       env_check: {
         SUPABASE_URL: !!process.env.SUPABASE_URL,
-        SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY
+        SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+        SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY
       }
     });
   }
