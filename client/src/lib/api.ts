@@ -18,6 +18,9 @@ export const API_ENDPOINTS = {
     login: `${API_BASE_URL}/api/auth/login`,
   },
   users: `${API_BASE_URL}/api/users`,
+  vehicles: (userId: string) => `${API_BASE_URL}/api/vehicles/${userId}`,
+  vehiclesBase: `${API_BASE_URL}/api/vehicles`,
+  userSettings: (userId: string) => `${API_BASE_URL}/api/user/${userId}/settings`,
   health: `${API_BASE_URL}/api/health`,
 };
 
@@ -59,6 +62,48 @@ export const authAPI = {
     return apiCall(API_ENDPOINTS.auth.login, {
       method: "POST",
       body: JSON.stringify({ username, password }),
+    });
+  },
+};
+
+// Vehicles API functions
+export const vehiclesAPI = {
+  getVehicles: async (userId: string) => {
+    return apiCall(API_ENDPOINTS.vehicles(userId));
+  },
+  
+  createVehicle: async (userId: string, vehicleData: any) => {
+    return apiCall(API_ENDPOINTS.vehiclesBase, {
+      method: "POST",
+      body: JSON.stringify({ ...vehicleData, userId }),
+    });
+  },
+  
+  updateVehicle: async (vehicleId: string, userId: string, vehicleData: any) => {
+    return apiCall(`${API_ENDPOINTS.vehiclesBase}/${vehicleId}`, {
+      method: "PUT",
+      body: JSON.stringify({ ...vehicleData, userId }),
+    });
+  },
+  
+  deleteVehicle: async (vehicleId: string, userId: string) => {
+    return apiCall(`${API_ENDPOINTS.vehiclesBase}/${vehicleId}`, {
+      method: "DELETE",
+      body: JSON.stringify({ userId }),
+    });
+  },
+};
+
+// User settings API functions
+export const settingsAPI = {
+  getUserSettings: async (userId: string) => {
+    return apiCall(API_ENDPOINTS.userSettings(userId));
+  },
+  
+  updateUserSettings: async (userId: string, settings: any) => {
+    return apiCall(API_ENDPOINTS.userSettings(userId), {
+      method: "PUT",
+      body: JSON.stringify(settings),
     });
   },
 };
