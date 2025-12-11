@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, decimal, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,9 +8,8 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
-  name: text("name"),
-  currency: text("currency").default("CRC"),
-  units: text("units").default("metric"),
+  fullName: text("full_name"),
+  role: text("role").default("user"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -19,10 +18,13 @@ export const vehicles = pgTable("vehicles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  year: text("year").notNull(),
-  fuelType: text("fuel_type").notNull().default("Gasolina"),
+  plate: text("plate").default(""),
+  type: text("type").default("gasoline"),
+  brand: text("brand").default(""),
+  model: text("model").default(""),
+  year: integer("year").notNull(),
   tankCapacity: decimal("tank_capacity"),
-  efficiency: decimal("efficiency"),
+  averageEfficiency: decimal("average_efficiency"),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -42,12 +44,13 @@ export const fuelRecords = pgTable("fuel_records", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   vehicleId: varchar("vehicle_id").notNull().references(() => vehicles.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
   liters: decimal("liters").notNull(),
   pricePerLiter: decimal("price_per_liter").notNull(),
   totalCost: decimal("total_cost").notNull(),
   odometer: decimal("odometer"),
-  station: text("station"),
-  date: timestamp("date").notNull(),
+  stationName: text("station_name"),
+  stationLocation: text("station_location"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -62,8 +65,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertVehicleSchema = createInsertSchema(vehicles).omit({
   id: true,
   userId: true,
+  isDefault: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  // Make some fields optional for the API
+  plate: z.string().optional(),
+  brand: z.string().optional(), 
+  model: z.string().optional(),
+  fuelType: z.string().optional(), // Map to 'type' in database
+  tankCapacity: z.string().optional(),
+  efficiency: z.string().optional(), // Map to 'average_efficiency' in database
 });
 
 export const insertNotificationSchema = createInsertSchema(userNotifications).omit({
