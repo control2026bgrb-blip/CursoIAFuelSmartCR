@@ -347,13 +347,13 @@ export function AddRecordModal({ open, onOpenChange, onRecordAdded }: AddRecordM
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Precio/L (₡)</Label>
+              <Label htmlFor="pricePerLiter">Precio/L (₡)</Label>
               <Input
-                id="price"
+                id="pricePerLiter"
                 type="number"
                 placeholder="0"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                value={formData.pricePerLiter}
+                onChange={(e) => setFormData({ ...formData, pricePerLiter: e.target.value })}
                 data-testid="input-price"
               />
             </div>
