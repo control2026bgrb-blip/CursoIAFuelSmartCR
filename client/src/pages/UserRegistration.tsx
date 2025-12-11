@@ -137,7 +137,7 @@ export default function UserRegistration() {
 
           <div className="mt-6 text-center">
             <Button
-              variant="link"
+              variant="ghost"
               onClick={() => setLocation("/login")}
               className="text-sm"
             >

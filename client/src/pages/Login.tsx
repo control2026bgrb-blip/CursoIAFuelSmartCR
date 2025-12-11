@@ -111,7 +111,7 @@ export default function Login() {
 
           <div className="mt-6 text-center">
             <Button
-              variant="link"
+              variant="ghost"
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm"
             >
