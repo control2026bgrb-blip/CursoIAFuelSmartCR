@@ -744,89 +744,171 @@ app.get("/api/test", async (req, res) => {
   }
 });
 
-// Migration endpoint - Add missing columns and tables
-app.post("/api/migrate", async (req, res) => {
+// Migration endpoint - Check database structure and provide SQL commands
+app.get("/api/migrate", async (req, res) => {
   try {
     if (!supabase) {
       return res.status(500).json({ error: "Supabase not initialized" });
     }
 
     const results = [];
+    const executed = [];
+    const errors = [];
 
-    // Check and add missing columns to existing tables
+    // Try to execute migrations using Supabase RPC or direct operations
+    
+    // 1. Try to add is_default column to vehicles table
     try {
-      // Add missing columns to users table if they don't exist
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`
-      });
-      results.push("Added role column to users table");
-    } catch (error) {
-      console.log("Users table role column might already exist:", error.message);
-    }
-
-    // Create user_notifications table (since it doesn't exist)
-    try {
-      const { error } = await supabase.rpc('exec_sql', { 
-        sql: `CREATE TABLE IF NOT EXISTS user_notifications (
-          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          fuel_reminders BOOLEAN DEFAULT true,
-          price_alerts BOOLEAN DEFAULT true,
-          maintenance_alerts BOOLEAN DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        );`
-      });
+      // First check if column exists by trying to select it
+      const { error: checkError } = await supabase
+        .from('vehicles')
+        .select('is_default')
+        .limit(1);
       
-      if (error) {
-        console.error("Create user_notifications error:", error);
+      if (checkError && checkError.message.includes('column "is_default" does not exist')) {
+        // Try to add the column using RPC
+        const { error: addError } = await supabase.rpc('exec_sql', {
+          sql: 'ALTER TABLE vehicles ADD COLUMN is_default BOOLEAN DEFAULT false;'
+        });
+        
+        if (addError) {
+          errors.push(`Failed to add is_default column: ${addError.message}`);
+          results.push("❌ Could not add is_default column - run manually in Supabase SQL Editor");
+        } else {
+          executed.push("✅ Added is_default column to vehicles table");
+        }
       } else {
-        results.push("Created user_notifications table");
+        results.push("✅ is_default column already exists in vehicles table");
       }
     } catch (error) {
-      console.log("User notifications table creation error:", error.message);
+      errors.push(`Error with is_default column: ${error.message}`);
     }
 
-    // Check if we need to add any missing columns to existing tables
+    // 2. Try to create user_notifications table
     try {
-      // Check vehicles table structure and add missing columns if needed
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS plate TEXT DEFAULT '';`
-      });
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';`
-      });
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS model TEXT DEFAULT '';`
-      });
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;`
-      });
-      results.push("Checked and added missing columns to vehicles table");
+      const { error: checkError } = await supabase
+        .from('user_notifications')
+        .select('id')
+        .limit(1);
+      
+      if (checkError && checkError.message.includes('relation "user_notifications" does not exist')) {
+        const { error: createError } = await supabase.rpc('exec_sql', {
+          sql: `CREATE TABLE user_notifications (
+            id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            fuel_reminders BOOLEAN DEFAULT true,
+            price_alerts BOOLEAN DEFAULT true,
+            maintenance_alerts BOOLEAN DEFAULT true,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          );`
+        });
+        
+        if (createError) {
+          errors.push(`Failed to create user_notifications table: ${createError.message}`);
+          results.push("❌ Could not create user_notifications table - run manually in Supabase SQL Editor");
+        } else {
+          executed.push("✅ Created user_notifications table");
+        }
+      } else {
+        results.push("✅ user_notifications table already exists");
+      }
     } catch (error) {
-      console.log("Vehicles table columns might already exist:", error.message);
+      errors.push(`Error with user_notifications table: ${error.message}`);
     }
 
-    // Check fuel_records table
-    try {
-      await supabase.rpc('exec_sql', { 
-        sql: `ALTER TABLE fuel_records ADD COLUMN IF NOT EXISTS station_location TEXT;`
-      });
-      results.push("Checked fuel_records table columns");
-    } catch (error) {
-      console.log("Fuel records table columns might already exist:", error.message);
+    // 3. Try to add other vehicle columns
+    const vehicleColumns = [
+      { name: 'plate', type: 'TEXT DEFAULT \'\'' },
+      { name: 'brand', type: 'TEXT DEFAULT \'\'' },
+      { name: 'model', type: 'TEXT DEFAULT \'\'' }
+    ];
+    
+    for (const column of vehicleColumns) {
+      try {
+        const { error: checkError } = await supabase
+          .from('vehicles')
+          .select(column.name)
+          .limit(1);
+        
+        if (checkError && checkError.message.includes(`column "${column.name}" does not exist`)) {
+          const { error: addError } = await supabase.rpc('exec_sql', {
+            sql: `ALTER TABLE vehicles ADD COLUMN ${column.name} ${column.type};`
+          });
+          
+          if (addError) {
+            errors.push(`Failed to add ${column.name} column: ${addError.message}`);
+            results.push(`❌ Could not add ${column.name} column - run manually`);
+          } else {
+            executed.push(`✅ Added ${column.name} column to vehicles table`);
+          }
+        } else {
+          results.push(`✅ ${column.name} column already exists in vehicles table`);
+        }
+      } catch (error) {
+        errors.push(`Error with ${column.name} column: ${error.message}`);
+      }
     }
+
+    // Provide manual SQL commands if RPC failed
+    const manualSQL = `
+-- Run these commands manually in Supabase SQL Editor if needed:
+
+-- Add missing columns to vehicles table
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS plate TEXT DEFAULT '';
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS model TEXT DEFAULT '';
+
+-- Create user_notifications table
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  fuel_reminders BOOLEAN DEFAULT true,
+  price_alerts BOOLEAN DEFAULT true,
+  maintenance_alerts BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Add missing columns to other tables
+ALTER TABLE fuel_records ADD COLUMN IF NOT EXISTS station_location TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';
+`;
 
     res.json({ 
-      message: "Migration completed successfully",
-      results: results,
-      note: "Existing tables were preserved, only missing columns and tables were added"
+      message: "Migration completed",
+      executed: executed,
+      alreadyExists: results,
+      errors: errors,
+      manualSQL: errors.length > 0 ? manualSQL : null,
+      note: errors.length > 0 ? 
+        "Some migrations failed - use the manual SQL commands in Supabase SQL Editor" : 
+        "All migrations completed successfully",
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error("Migration error:", error);
     res.status(500).json({ 
       error: "Migration failed", 
-      details: error.message 
+      details: error.message,
+      manualSQL: `
+-- Run these commands manually in Supabase SQL Editor:
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT false;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS plate TEXT DEFAULT '';
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS model TEXT DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  fuel_reminders BOOLEAN DEFAULT true,
+  price_alerts BOOLEAN DEFAULT true,
+  maintenance_alerts BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+`
     });
   }
 });
