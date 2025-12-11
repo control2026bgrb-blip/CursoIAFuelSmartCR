@@ -164,6 +164,7 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+
 // Vehicles endpoints
 app.get("/api/vehicles/:userId", async (req, res) => {
   try {
