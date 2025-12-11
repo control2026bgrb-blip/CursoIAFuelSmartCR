@@ -1,8 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { createClient } from "@supabase/supabase-js";
 import { users, vehicles, userNotifications, fuelRecords, insertUserSchema, insertVehicleSchema, insertNotificationSchema, insertFuelRecordSchema } from "../shared/schema.js";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -12,33 +11,25 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Database connection
+// Database connection using Supabase client
 console.log("🔍 Environment check:");
+console.log("SUPABASE_URL exists:", !!process.env.SUPABASE_URL);
+console.log("SUPABASE_ANON_KEY exists:", !!process.env.SUPABASE_ANON_KEY);
 console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
-console.log("DATABASE_URL preview:", process.env.DATABASE_URL ? 
-  process.env.DATABASE_URL.substring(0, 30) + "..." : "undefined");
 
-if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL not found in environment variables");
-  console.error("Available env vars:", Object.keys(process.env).filter(key => 
-    key.includes('DATABASE') || key.includes('SUPABASE')
-  ));
-}
-
-let sql, db;
+let supabase;
 try {
-  if (process.env.DATABASE_URL) {
-    // Configure neon with better options for serverless
-    sql = neon(process.env.DATABASE_URL, {
-      fetchConnectionCache: true,
-    });
-    db = drizzle(sql);
-    console.log("✅ Database connection initialized");
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+    console.log("✅ Supabase client initialized");
   } else {
-    console.error("❌ Cannot initialize database - no DATABASE_URL");
+    console.error("❌ Missing SUPABASE_URL or SUPABASE_ANON_KEY");
   }
 } catch (error) {
-  console.error("❌ Database initialization error:", error.message);
+  console.error("❌ Supabase initialization error:", error.message);
 }
 
 // Validation schemas
@@ -47,18 +38,23 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-// User registration
+// User registration using Supabase client
 app.post("/api/auth/register", async (req, res) => {
   try {
-    if (!db) {
+    if (!supabase) {
       return res.status(500).json({ error: "Database not available" });
     }
 
     const { username, password } = insertUserSchema.parse(req.body);
     
     // Check if user already exists
-    const existingUser = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    if (existingUser.length > 0) {
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .single();
+    
+    if (existingUser) {
       return res.status(400).json({ error: "Username already exists" });
     }
     
@@ -66,13 +62,22 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     
     // Create user in database
-    const newUser = await db.insert(users).values({
-      username,
-      password: hashedPassword,
-    }).returning();
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .insert({
+        username,
+        password: hashedPassword,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: "Failed to create user: " + error.message });
+    }
     
     // Return user without password
-    const { password: _, ...userResponse } = newUser[0];
+    const { password: _, ...userResponse } = newUser;
     res.status(201).json({ user: userResponse });
     
   } catch (error) {
@@ -402,57 +407,69 @@ app.get("/api/health", (req, res) => {
 
 app.get("/api/test", async (req, res) => {
   try {
-    if (!db) {
+    if (!supabase) {
       return res.json({ 
-        message: "API is working but database not initialized",
+        message: "API is working but Supabase not initialized",
         database: false,
         env_check: {
-          DATABASE_URL: !!process.env.DATABASE_URL,
+          SUPABASE_URL: !!process.env.SUPABASE_URL,
+          SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
           NODE_ENV: process.env.NODE_ENV
         }
       });
     }
 
-    // Try a simple database query
-    console.log("Attempting database query...");
-    const result = await sql`SELECT 1 as test`;
-    console.log("Database query successful:", result);
+    // Try a simple database query using Supabase client
+    console.log("Attempting Supabase query...");
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1);
+    
+    if (error) {
+      console.log("Supabase query error:", error);
+      return res.json({
+        message: "Supabase client working but query failed",
+        database: false,
+        error: error.message,
+        error_code: error.code,
+        error_details: error.details
+      });
+    }
+    
+    console.log("Supabase query successful");
     
     res.json({ 
-      message: "API and database are working!",
+      message: "API and Supabase are working!",
       database: true,
-      test_query: result[0]
+      query_result: "success"
     });
   } catch (error) {
-    console.error("Database test error:", error);
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      cause: error.cause,
-      stack: error.stack?.substring(0, 500)
-    });
+    console.error("Supabase test error:", error);
     
     res.json({ 
-      message: "API working but database error",
+      message: "API working but Supabase error",
       database: false,
       error: error.message,
       error_name: error.name,
-      error_cause: error.cause?.toString(),
       env_check: {
-        DATABASE_URL: !!process.env.DATABASE_URL,
-        DATABASE_URL_preview: process.env.DATABASE_URL ? 
-          process.env.DATABASE_URL.substring(0, 40) + "..." : "undefined"
+        SUPABASE_URL: !!process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY
       }
     });
   }
 });
 
-// Migration endpoint (for testing on Vercel)
+// Migration endpoint using Supabase SQL
 app.post("/api/migrate", async (req, res) => {
   try {
-    // Create users table
-    await sql`
-      CREATE TABLE IF NOT EXISTS users (
+    if (!supabase) {
+      return res.status(500).json({ error: "Supabase not initialized" });
+    }
+
+    // Create tables using Supabase RPC or direct SQL
+    const migrations = [
+      `CREATE TABLE IF NOT EXISTS users (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
@@ -462,12 +479,9 @@ app.post("/api/migrate", async (req, res) => {
         units TEXT DEFAULT 'metric',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `;
-
-    // Create vehicles table
-    await sql`
-      CREATE TABLE IF NOT EXISTS vehicles (
+      );`,
+      
+      `CREATE TABLE IF NOT EXISTS vehicles (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         name TEXT NOT NULL,
@@ -478,12 +492,9 @@ app.post("/api/migrate", async (req, res) => {
         is_default BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `;
-
-    // Create user_notifications table
-    await sql`
-      CREATE TABLE IF NOT EXISTS user_notifications (
+      );`,
+      
+      `CREATE TABLE IF NOT EXISTS user_notifications (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         fuel_reminders BOOLEAN DEFAULT true,
@@ -491,12 +502,9 @@ app.post("/api/migrate", async (req, res) => {
         maintenance_alerts BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `;
-
-    // Create fuel_records table
-    await sql`
-      CREATE TABLE IF NOT EXISTS fuel_records (
+      );`,
+      
+      `CREATE TABLE IF NOT EXISTS fuel_records (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         vehicle_id VARCHAR NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
@@ -509,11 +517,23 @@ app.post("/api/migrate", async (req, res) => {
         notes TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `;
+      );`
+    ];
+
+    // Execute each migration
+    for (const migration of migrations) {
+      const { error } = await supabase.rpc('exec_sql', { sql: migration });
+      if (error) {
+        console.error("Migration error:", error);
+        return res.status(500).json({ 
+          error: "Migration failed", 
+          details: error.message 
+        });
+      }
+    }
 
     res.json({ 
-      message: "Migration completed successfully",
+      message: "Migration completed successfully using Supabase",
       tables: ["users", "vehicles", "user_notifications", "fuel_records"]
     });
   } catch (error) {
