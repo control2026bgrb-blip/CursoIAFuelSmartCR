@@ -58,10 +58,10 @@ export default function Register() {
       const response = await vehiclesAPI.getVehicles(currentUser.id);
       setVehicles(response.data.vehicles);
       
-      // Auto-select default vehicle if available
-      const defaultVehicle = response.data.vehicles.find((v: any) => v.isDefault);
-      if (defaultVehicle) {
-        setFormData(prev => ({ ...prev, vehicleId: defaultVehicle.id }));
+      // Auto-select first vehicle if available
+      const firstVehicle = response.data.vehicles[0];
+      if (firstVehicle) {
+        setFormData(prev => ({ ...prev, vehicleId: firstVehicle.id }));
       }
     } catch (error: any) {
       toast({
@@ -89,7 +89,7 @@ export default function Register() {
       setScanComplete(true);
       
       // Find a vehicle to use for the mock data
-      const vehicleToUse = vehicles.find(v => v.isDefault) || vehicles[0];
+      const vehicleToUse = vehicles[0];
       
       setFormData({
         vehicleId: vehicleToUse?.id || "",
@@ -151,7 +151,7 @@ export default function Register() {
       // Reset form
       setScanComplete(false);
       setFormData({
-        vehicleId: vehicles.find(v => v.isDefault)?.id || "",
+        vehicleId: vehicles[0]?.id || "",
         liters: "",
         pricePerLiter: "",
         totalCost: "",
@@ -342,7 +342,6 @@ export default function Register() {
                     {vehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
                         {vehicle.name} ({vehicle.year})
-                        {vehicle.isDefault && " - Predeterminado"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -444,7 +443,7 @@ export default function Register() {
                 variant="outline"
                 onClick={() =>
                   setFormData({
-                    vehicleId: vehicles.find(v => v.isDefault)?.id || "",
+                    vehicleId: vehicles[0]?.id || "",
                     liters: "",
                     pricePerLiter: "",
                     totalCost: "",
