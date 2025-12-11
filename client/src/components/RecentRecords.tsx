@@ -51,7 +51,6 @@ const mockRecords: Record[] = [
     location: "Total - Alajuela",
   },
 ];
-
 export function RecentRecords() {
   return (
     <Card data-testid="card-recent-records">

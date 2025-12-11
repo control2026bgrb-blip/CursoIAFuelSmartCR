@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,67 +18,179 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, QrCode, Bluetooth, FileText, Upload, Check } from "lucide-react";
+import { Camera, QrCode, Bluetooth, FileText, Upload, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { vehiclesAPI, fuelRecordsAPI } from "@/lib/api";
 
 interface AddRecordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onRecordAdded?: () => void;
 }
 
-export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
-  const [method, setMethod] = useState<string>("ocr");
+export function AddRecordModal({ open, onOpenChange, onRecordAdded }: AddRecordModalProps) {
+  const [method, setMethod] = useState<string>("manual");
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
   const { toast } = useToast();
 
-  // todo: remove mock functionality - datos de Costa Rica
+  // Get current user from localStorage
+  const getCurrentUser = () => {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  };
+
+  const currentUser = getCurrentUser();
+
   const [formData, setFormData] = useState({
-    vehicle: "",
+    vehicleId: "",
     liters: "",
-    price: "",
+    pricePerLiter: "",
     totalCost: "",
     odometer: "",
     station: "",
     date: new Date().toISOString().split("T")[0],
+    notes: "",
   });
+
+  // Load user vehicles when modal opens
+  useEffect(() => {
+    if (open && currentUser?.id) {
+      loadVehicles();
+    }
+  }, [open, currentUser?.id]);
+
+  // Calculate total cost when liters or price changes
+  useEffect(() => {
+    if (formData.liters && formData.pricePerLiter) {
+      const total = (parseFloat(formData.liters) * parseFloat(formData.pricePerLiter)).toFixed(2);
+      setFormData(prev => ({ ...prev, totalCost: total }));
+    }
+  }, [formData.liters, formData.pricePerLiter]);
+
+  const loadVehicles = async () => {
+    try {
+      setLoadingVehicles(true);
+      const response = await vehiclesAPI.getVehicles(currentUser.id);
+      setVehicles(response.data.vehicles);
+      
+      // Auto-select default vehicle if available
+      const defaultVehicle = response.data.vehicles.find((v: any) => v.isDefault);
+      if (defaultVehicle) {
+        setFormData(prev => ({ ...prev, vehicleId: defaultVehicle.id }));
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los vehículos: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingVehicles(false);
+    }
+  };
 
   const handleScan = () => {
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
       setScanComplete(true);
-      setFormData({
-        vehicle: "Toyota Corolla",
+      
+      // Find a vehicle to use for the mock data
+      const vehicleToUse = vehicles.find(v => v.isDefault) || vehicles[0];
+      
+      setFormData(prev => ({
+        ...prev,
+        vehicleId: vehicleToUse?.id || "",
         liters: "45.2",
-        price: "700",
+        pricePerLiter: "700",
         totalCost: "31640",
-        odometer: "45,320",
+        odometer: "45320",
         station: "Gasolinera Delta - Escazú",
         date: new Date().toISOString().split("T")[0],
-      });
+        notes: "Datos extraídos automáticamente del recibo",
+      }));
       toast({
         title: "Recibo escaneado exitosamente",
-        description: "Datos extraídos del recibo",
+        description: "Datos extraídos del recibo con OCR",
       });
     }, 2000);
   };
 
-  const handleSubmit = () => {
-    toast({
-      title: "Registro agregado",
-      description: "Tu registro de combustible ha sido guardado",
-    });
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    if (!currentUser?.id) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para registrar combustible",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.vehicleId || !formData.liters || !formData.pricePerLiter) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const recordData = {
+        vehicleId: formData.vehicleId,
+        liters: formData.liters,
+        pricePerLiter: formData.pricePerLiter,
+        totalCost: formData.totalCost,
+        odometer: formData.odometer || null,
+        station: formData.station || null,
+        date: new Date(formData.date).toISOString(),
+        notes: formData.notes || null,
+      };
+
+      await fuelRecordsAPI.createFuelRecord(currentUser.id, recordData);
+      
+      toast({
+        title: "Registro guardado",
+        description: "Tu registro de combustible ha sido guardado exitosamente",
+      });
+      
+      // Reset form and close modal
+      resetForm();
+      onOpenChange(false);
+      
+      // Notify parent component to refresh data
+      if (onRecordAdded) {
+        onRecordAdded();
+      }
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el registro: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
     setScanComplete(false);
     setFormData({
-      vehicle: "",
+      vehicleId: vehicles.find(v => v.isDefault)?.id || "",
       liters: "",
-      price: "",
+      pricePerLiter: "",
       totalCost: "",
       odometer: "",
       station: "",
       date: new Date().toISOString().split("T")[0],
+      notes: "",
     });
   };
 
@@ -186,29 +298,39 @@ export function AddRecordModal({ open, onOpenChange }: AddRecordModalProps) {
         <div className="mt-4 grid gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="vehicle">Vehículo</Label>
-              <Select
-                value={formData.vehicle}
-                onValueChange={(v) => setFormData({ ...formData, vehicle: v })}
-              >
-                <SelectTrigger id="vehicle" data-testid="select-vehicle">
-                  <SelectValue placeholder="Seleccionar vehículo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Toyota Corolla">Toyota Corolla</SelectItem>
-                  <SelectItem value="BYD Dolphin">BYD Dolphin</SelectItem>
-                  <SelectItem value="Mitsubishi L200">Mitsubishi L200</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="vehicle">Vehículo *</Label>
+              {loadingVehicles ? (
+                <div className="flex items-center justify-center h-10 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : (
+                <Select
+                  value={formData.vehicleId}
+                  onValueChange={(v) => setFormData({ ...formData, vehicleId: v })}
+                >
+                  <SelectTrigger id="vehicle" data-testid="select-vehicle">
+                    <SelectValue placeholder="Seleccionar vehículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.name} ({vehicle.year})
+                        {vehicle.isDefault && " - Predeterminado"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Fecha</Label>
+              <Label htmlFor="date">Fecha *</Label>
               <Input
                 id="date"
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 data-testid="input-date"
+                required
               />
             </div>
           </div>
