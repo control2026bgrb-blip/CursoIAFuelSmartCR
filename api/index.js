@@ -213,27 +213,6 @@ app.post("/api/vehicles", async (req, res) => {
     const vehicleData = insertVehicleSchema.parse(req.body);
     const { userId, isDefault } = req.body;
     
-    // Check if this is the first vehicle for the user
-    const { data: existingVehicles } = await supabase
-      .from('vehicles')
-      .select('id')
-      .eq('user_id', userId);
-    
-    const isFirstVehicle = !existingVehicles || existingVehicles.length === 0;
-    const shouldBeDefault = isDefault || isFirstVehicle;
-    
-    // If this should be default, unset other defaults
-    if (shouldBeDefault) {
-      const { error: updateError } = await supabase
-        .from('vehicles')
-        .update({ is_default: false })
-        .eq('user_id', userId);
-      
-      if (updateError) {
-        console.error("Error unsetting default vehicles:", updateError);
-      }
-    }
-    
     const { data: newVehicle, error } = await supabase
       .from('vehicles')
       .insert({
@@ -246,7 +225,6 @@ app.post("/api/vehicles", async (req, res) => {
         year: parseInt(vehicleData.year),
         tank_capacity: vehicleData.tankCapacity ? parseFloat(vehicleData.tankCapacity) : null,
         average_efficiency: vehicleData.efficiency ? parseFloat(vehicleData.efficiency) : null,
-        is_default: shouldBeDefault,
       })
       .select()
       .single();
@@ -279,19 +257,7 @@ app.put("/api/vehicles/:id", async (req, res) => {
 
     const { id } = req.params;
     const vehicleData = insertVehicleSchema.parse(req.body);
-    const { userId, isDefault } = req.body;
-    
-    // If setting as default, unset other defaults
-    if (isDefault) {
-      const { error: updateError } = await supabase
-        .from('vehicles')
-        .update({ is_default: false })
-        .eq('user_id', userId);
-      
-      if (updateError) {
-        console.error("Error unsetting default vehicles:", updateError);
-      }
-    }
+    const { userId } = req.body;
     
     const { data: updatedVehicle, error } = await supabase
       .from('vehicles')
@@ -304,7 +270,6 @@ app.put("/api/vehicles/:id", async (req, res) => {
         year: parseInt(vehicleData.year),
         tank_capacity: vehicleData.tankCapacity ? parseFloat(vehicleData.tankCapacity) : null,
         average_efficiency: vehicleData.efficiency ? parseFloat(vehicleData.efficiency) : null,
-        is_default: isDefault || false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
