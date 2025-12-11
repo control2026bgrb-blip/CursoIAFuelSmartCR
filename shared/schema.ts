@@ -38,6 +38,21 @@ export const userNotifications = pgTable("user_notifications", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const fuelRecords = pgTable("fuel_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  vehicleId: varchar("vehicle_id").notNull().references(() => vehicles.id, { onDelete: "cascade" }),
+  liters: decimal("liters").notNull(),
+  pricePerLiter: decimal("price_per_liter").notNull(),
+  totalCost: decimal("total_cost").notNull(),
+  odometer: decimal("odometer"),
+  station: text("station"),
+  date: timestamp("date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -58,6 +73,13 @@ export const insertNotificationSchema = createInsertSchema(userNotifications).om
   updatedAt: true,
 });
 
+export const insertFuelRecordSchema = createInsertSchema(fuelRecords).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -65,3 +87,5 @@ export type Vehicle = typeof vehicles.$inferSelect;
 export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
 export type UserNotification = typeof userNotifications.$inferSelect;
 export type InsertUserNotification = z.infer<typeof insertNotificationSchema>;
+export type FuelRecord = typeof fuelRecords.$inferSelect;
+export type InsertFuelRecord = z.infer<typeof insertFuelRecordSchema>;

@@ -21,6 +21,8 @@ export const API_ENDPOINTS = {
   vehicles: (userId: string) => `${API_BASE_URL}/api/vehicles/${userId}`,
   vehiclesBase: `${API_BASE_URL}/api/vehicles`,
   userSettings: (userId: string) => `${API_BASE_URL}/api/user/${userId}/settings`,
+  fuelRecords: (userId: string) => `${API_BASE_URL}/api/fuel-records/${userId}`,
+  fuelRecordsBase: `${API_BASE_URL}/api/fuel-records`,
   health: `${API_BASE_URL}/api/health`,
 };
 
@@ -104,6 +106,34 @@ export const settingsAPI = {
     return apiCall(API_ENDPOINTS.userSettings(userId), {
       method: "PUT",
       body: JSON.stringify(settings),
+    });
+  },
+};
+
+// Fuel records API functions
+export const fuelRecordsAPI = {
+  getFuelRecords: async (userId: string) => {
+    return apiCall(API_ENDPOINTS.fuelRecords(userId));
+  },
+  
+  createFuelRecord: async (userId: string, recordData: any) => {
+    return apiCall(API_ENDPOINTS.fuelRecordsBase, {
+      method: "POST",
+      body: JSON.stringify({ ...recordData, userId }),
+    });
+  },
+  
+  updateFuelRecord: async (recordId: string, userId: string, recordData: any) => {
+    return apiCall(`${API_ENDPOINTS.fuelRecordsBase}/${recordId}`, {
+      method: "PUT",
+      body: JSON.stringify({ ...recordData, userId }),
+    });
+  },
+  
+  deleteFuelRecord: async (recordId: string, userId: string) => {
+    return apiCall(`${API_ENDPOINTS.fuelRecordsBase}/${recordId}`, {
+      method: "DELETE",
+      body: JSON.stringify({ userId }),
     });
   },
 };

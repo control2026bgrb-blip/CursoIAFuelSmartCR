@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { users, vehicles, userNotifications, insertUserSchema, insertVehicleSchema, insertNotificationSchema } from "../shared/schema.js";
-import { eq, and } from "drizzle-orm";
+import { users, vehicles, userNotifications, fuelRecords, insertUserSchema, insertVehicleSchema, insertNotificationSchema, insertFuelRecordSchema } from "../shared/schema.js";
+import { eq, and, desc } from "drizzle-orm";
 
 const app = express();
 
@@ -263,6 +263,100 @@ app.put("/api/user/:userId/settings", async (req, res) => {
   }
 });
 
+// Fuel records endpoints
+app.get("/api/fuel-records/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const records = await db.select({
+      id: fuelRecords.id,
+      vehicleId: fuelRecords.vehicleId,
+      liters: fuelRecords.liters,
+      pricePerLiter: fuelRecords.pricePerLiter,
+      totalCost: fuelRecords.totalCost,
+      odometer: fuelRecords.odometer,
+      station: fuelRecords.station,
+      date: fuelRecords.date,
+      notes: fuelRecords.notes,
+      createdAt: fuelRecords.createdAt,
+      vehicleName: vehicles.name,
+    })
+    .from(fuelRecords)
+    .leftJoin(vehicles, eq(fuelRecords.vehicleId, vehicles.id))
+    .where(eq(fuelRecords.userId, userId))
+    .orderBy(desc(fuelRecords.date));
+    
+    res.json({ records });
+  } catch (error) {
+    console.error("Get fuel records error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/fuel-records", async (req, res) => {
+  try {
+    const recordData = insertFuelRecordSchema.parse(req.body);
+    const { userId } = req.body;
+    
+    const newRecord = await db.insert(fuelRecords).values({
+      ...recordData,
+      userId,
+    }).returning();
+    
+    res.status(201).json({ record: newRecord[0] });
+  } catch (error) {
+    console.error("Create fuel record error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/api/fuel-records/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const recordData = insertFuelRecordSchema.parse(req.body);
+    const { userId } = req.body;
+    
+    const updatedRecord = await db.update(fuelRecords)
+      .set({ ...recordData, updatedAt: new Date() })
+      .where(and(eq(fuelRecords.id, id), eq(fuelRecords.userId, userId)))
+      .returning();
+    
+    if (updatedRecord.length === 0) {
+      return res.status(404).json({ error: "Fuel record not found" });
+    }
+    
+    res.json({ record: updatedRecord[0] });
+  } catch (error) {
+    console.error("Update fuel record error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid input", details: error.errors });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.delete("/api/fuel-records/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+    
+    const deletedRecord = await db.delete(fuelRecords)
+      .where(and(eq(fuelRecords.id, id), eq(fuelRecords.userId, userId)))
+      .returning();
+    
+    if (deletedRecord.length === 0) {
+      return res.status(404).json({ error: "Fuel record not found" });
+    }
+    
+    res.json({ message: "Fuel record deleted successfully" });
+  } catch (error) {
+    console.error("Delete fuel record error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Basic API routes
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -319,9 +413,27 @@ app.post("/api/migrate", async (req, res) => {
       );
     `;
 
+    // Create fuel_records table
+    await sql`
+      CREATE TABLE IF NOT EXISTS fuel_records (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        vehicle_id VARCHAR NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+        liters DECIMAL NOT NULL,
+        price_per_liter DECIMAL NOT NULL,
+        total_cost DECIMAL NOT NULL,
+        odometer DECIMAL,
+        station TEXT,
+        date TIMESTAMP NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `;
+
     res.json({ 
       message: "Migration completed successfully",
-      tables: ["users", "vehicles", "user_notifications"]
+      tables: ["users", "vehicles", "user_notifications", "fuel_records"]
     });
   } catch (error) {
     console.error("Migration error:", error);
