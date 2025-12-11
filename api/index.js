@@ -15,18 +15,32 @@ app.use(express.urlencoded({ extended: false }));
 console.log("🔍 Environment check:");
 console.log("SUPABASE_URL exists:", !!process.env.SUPABASE_URL);
 console.log("SUPABASE_ANON_KEY exists:", !!process.env.SUPABASE_ANON_KEY);
-console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("SUPABASE_SERVICE_ROLE_KEY exists:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 let supabase;
 try {
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // Use service role key for server-side operations (bypasses RLS)
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+    console.log("✅ Supabase client initialized with service role");
+  } else if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    // Fallback to anon key
     supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_ANON_KEY
     );
-    console.log("✅ Supabase client initialized");
+    console.log("✅ Supabase client initialized with anon key");
   } else {
-    console.error("❌ Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+    console.error("❌ Missing SUPABASE_URL or keys");
   }
 } catch (error) {
   console.error("❌ Supabase initialization error:", error.message);
