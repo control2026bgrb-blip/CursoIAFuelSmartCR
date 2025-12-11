@@ -350,7 +350,7 @@ app.get("/api/user/:userId/settings", async (req, res) => {
     
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, username, email, name, currency, units')
+      .select('id, username, password')
       .eq('id', userId)
       .single();
     
@@ -392,9 +392,23 @@ app.get("/api/user/:userId/settings", async (req, res) => {
       return res.status(500).json({ error: "Database error: " + notifError.message });
     }
     
+    // Return user data with defaults for missing fields
+    const userResponse = {
+      id: user.id,
+      username: user.username,
+      email: user.email || "",
+      name: user.name || "",
+      currency: user.currency || "CRC",
+      units: user.units || "metric"
+    };
+
     res.json({ 
-      user,
-      notifications
+      user: userResponse,
+      notifications: notifications || {
+        fuel_reminders: true,
+        price_alerts: true,
+        maintenance_alerts: true
+      }
     });
   } catch (error) {
     console.error("Get user settings error:", error);
@@ -631,6 +645,34 @@ app.get("/api/health", (req, res) => {
     database: !!process.env.DATABASE_URL ? "configured" : "missing",
     environment: process.env.NODE_ENV || "development"
   });
+});
+
+// Check database structure
+app.get("/api/db-structure", async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.json({ error: "Database not available" });
+    }
+
+    // Check what columns exist in users table
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('*')
+      .limit(1);
+
+    // Check what tables exist
+    const { data: tables, error: tablesError } = await supabase
+      .rpc('get_table_names');
+
+    res.json({
+      users_sample: users?.[0] || "No users found",
+      users_error: usersError?.message,
+      available_tables: tables || "Could not fetch tables",
+      tables_error: tablesError?.message
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 app.get("/api/test", async (req, res) => {
