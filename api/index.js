@@ -234,6 +234,7 @@ app.post("/api/vehicles", async (req, res) => {
       }
     }
     
+    // First, insert without is_default to avoid schema cache issues
     const { data: newVehicle, error } = await supabase
       .from('vehicles')
       .insert({
@@ -246,10 +247,24 @@ app.post("/api/vehicles", async (req, res) => {
         year: parseInt(vehicleData.year),
         tank_capacity: vehicleData.tankCapacity ? parseFloat(vehicleData.tankCapacity) : null,
         average_efficiency: vehicleData.efficiency ? parseFloat(vehicleData.efficiency) : null,
-        is_default: shouldBeDefault,
       })
       .select()
       .single();
+    
+    // Then update with is_default if the insert was successful
+    if (!error && newVehicle && shouldBeDefault) {
+      const { error: defaultError } = await supabase
+        .from('vehicles')
+        .update({ is_default: true })
+        .eq('id', newVehicle.id);
+      
+      if (defaultError) {
+        console.error("Error setting default vehicle:", defaultError);
+        // Don't fail the whole operation, just log the error
+      } else {
+        newVehicle.is_default = true;
+      }
+    }
     
     if (error) {
       console.error("Create vehicle error:", error);
@@ -640,7 +655,61 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Check database structure
+// Test specific vehicle operations
+app.get("/api/test-vehicle-schema", async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.json({ error: "Database not available" });
+    }
+
+    const tests = {};
+    
+    // Test 1: Try to select is_default column specifically
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('id, name, is_default')
+        .limit(1);
+      tests.selectIsDefault = { success: !error, error: error?.message, data: data };
+    } catch (error) {
+      tests.selectIsDefault = { success: false, error: error.message };
+    }
+
+    // Test 2: Check what columns actually exist
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .limit(1);
+      
+      if (data && data.length > 0) {
+        tests.actualColumns = { 
+          success: true, 
+          columns: Object.keys(data[0]),
+          hasIsDefault: 'is_default' in data[0]
+        };
+      } else {
+        tests.actualColumns = { 
+          success: true, 
+          columns: [],
+          note: "No vehicles in table to check columns"
+        };
+      }
+    } catch (error) {
+      tests.actualColumns = { success: false, error: error.message };
+    }
+
+    res.json({ 
+      message: "Vehicle schema tests completed",
+      tests: tests,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Force schema refresh and check database structure
 app.get("/api/db-structure", async (req, res) => {
   try {
     if (!supabase) {
