@@ -22,7 +22,7 @@
     "api:dev": "tsx server/api-dev.ts",
     "test": "vitest run tests/",
     "test:run": "vitest run tests/simple/",
-    "test:coverage": "vitest run --coverage tests/simple/",
+    "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch tests/simple/",
     "test:simple": "vitest run tests/simple/",

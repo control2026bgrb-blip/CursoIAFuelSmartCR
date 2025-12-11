@@ -15,6 +15,9 @@ build/
 .vercel/
 .next/
 
+# Coverage reports
+coverage/
+
 # Logs
 *.log
 npm-debug.log*

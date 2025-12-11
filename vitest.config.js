@@ -10,14 +10,33 @@ export default defineConfig({
     include: ['tests/**/*.{test,spec}.{js,ts,tsx}'],
     exclude: ['node_modules', 'dist', '.git'],
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      provider: 'v8',
+      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
+      reportsDirectory: './coverage',
       exclude: [
         'node_modules/',
         'tests/',
         'dist/',
         '**/*.config.js',
-        '**/*.config.ts'
-      ]
+        '**/*.config.ts',
+        '**/*.d.ts',
+        'coverage/',
+        '.github/',
+        'vite.config.ts',
+        'postcss.config.js'
+      ],
+      include: [
+        'client/src/**/*.{js,ts,tsx}',
+        'server/**/*.{js,ts}',
+        'shared/**/*.{js,ts}'
+      ],
+      // Thresholds disabled for now - focus on reporting
+      // thresholds: {
+      //   lines: 80,
+      //   functions: 80,
+      //   branches: 80,
+      //   statements: 80
+      // }
     }
   },
   resolve: {
