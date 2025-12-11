@@ -183,8 +183,21 @@ app.get("/api/users", async (req, res) => {
 // Vehicles endpoints
 app.get("/api/vehicles/:userId", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { userId } = req.params;
-    const userVehicles = await db.select().from(vehicles).where(eq(vehicles.userId, userId));
+    const { data: userVehicles, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error("Get vehicles error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
+    }
+    
     res.json({ vehicles: userVehicles });
   } catch (error) {
     console.error("Get vehicles error:", error);
@@ -194,22 +207,43 @@ app.get("/api/vehicles/:userId", async (req, res) => {
 
 app.post("/api/vehicles", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const vehicleData = insertVehicleSchema.parse(req.body);
     const { userId } = req.body;
     
     // If this is the first vehicle or marked as default, unset other defaults
     if (vehicleData.isDefault) {
-      await db.update(vehicles)
-        .set({ isDefault: false })
-        .where(eq(vehicles.userId, userId));
+      const { error: updateError } = await supabase
+        .from('vehicles')
+        .update({ is_default: false })
+        .eq('user_id', userId);
+      
+      if (updateError) {
+        console.error("Error unsetting default vehicles:", updateError);
+      }
     }
     
-    const newVehicle = await db.insert(vehicles).values({
-      ...vehicleData,
-      userId,
-    }).returning();
+    const { data: newVehicle, error } = await supabase
+      .from('vehicles')
+      .insert({
+        ...vehicleData,
+        user_id: userId,
+        fuel_type: vehicleData.fuelType,
+        tank_capacity: vehicleData.tankCapacity,
+        is_default: vehicleData.isDefault,
+      })
+      .select()
+      .single();
     
-    res.status(201).json({ vehicle: newVehicle[0] });
+    if (error) {
+      console.error("Create vehicle error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
+    }
+    
+    res.status(201).json({ vehicle: newVehicle });
   } catch (error) {
     console.error("Create vehicle error:", error);
     if (error instanceof z.ZodError) {
@@ -221,27 +255,49 @@ app.post("/api/vehicles", async (req, res) => {
 
 app.put("/api/vehicles/:id", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { id } = req.params;
     const vehicleData = insertVehicleSchema.parse(req.body);
     const { userId } = req.body;
     
     // If setting as default, unset other defaults
     if (vehicleData.isDefault) {
-      await db.update(vehicles)
-        .set({ isDefault: false })
-        .where(eq(vehicles.userId, userId));
+      const { error: updateError } = await supabase
+        .from('vehicles')
+        .update({ is_default: false })
+        .eq('user_id', userId);
+      
+      if (updateError) {
+        console.error("Error unsetting default vehicles:", updateError);
+      }
     }
     
-    const updatedVehicle = await db.update(vehicles)
-      .set({ ...vehicleData, updatedAt: new Date() })
-      .where(and(eq(vehicles.id, id), eq(vehicles.userId, userId)))
-      .returning();
+    const { data: updatedVehicle, error } = await supabase
+      .from('vehicles')
+      .update({
+        ...vehicleData,
+        fuel_type: vehicleData.fuelType,
+        tank_capacity: vehicleData.tankCapacity,
+        is_default: vehicleData.isDefault,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
     
-    if (updatedVehicle.length === 0) {
-      return res.status(404).json({ error: "Vehicle not found" });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: "Vehicle not found" });
+      }
+      console.error("Update vehicle error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
     }
     
-    res.json({ vehicle: updatedVehicle[0] });
+    res.json({ vehicle: updatedVehicle });
   } catch (error) {
     console.error("Update vehicle error:", error);
     if (error instanceof z.ZodError) {
@@ -253,15 +309,27 @@ app.put("/api/vehicles/:id", async (req, res) => {
 
 app.delete("/api/vehicles/:id", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { id } = req.params;
     const { userId } = req.body;
     
-    const deletedVehicle = await db.delete(vehicles)
-      .where(and(eq(vehicles.id, id), eq(vehicles.userId, userId)))
-      .returning();
+    const { data: deletedVehicle, error } = await supabase
+      .from('vehicles')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
     
-    if (deletedVehicle.length === 0) {
-      return res.status(404).json({ error: "Vehicle not found" });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: "Vehicle not found" });
+      }
+      console.error("Delete vehicle error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
     }
     
     res.json({ message: "Vehicle deleted successfully" });
@@ -274,37 +342,59 @@ app.delete("/api/vehicles/:id", async (req, res) => {
 // User settings endpoints
 app.get("/api/user/:userId/settings", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { userId } = req.params;
     
-    const user = await db.select({
-      id: users.id,
-      username: users.username,
-      email: users.email,
-      name: users.name,
-      currency: users.currency,
-      units: users.units,
-    }).from(users).where(eq(users.id, userId)).limit(1);
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, username, email, name, currency, units')
+      .eq('id', userId)
+      .single();
     
-    if (user.length === 0) {
-      return res.status(404).json({ error: "User not found" });
+    if (userError) {
+      if (userError.code === 'PGRST116') {
+        return res.status(404).json({ error: "User not found" });
+      }
+      console.error("Get user error:", userError);
+      return res.status(500).json({ error: "Database error: " + userError.message });
     }
     
-    let notifications = await db.select().from(userNotifications).where(eq(userNotifications.userId, userId)).limit(1);
+    let { data: notifications, error: notifError } = await supabase
+      .from('user_notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
     
     // Create default notifications if they don't exist
-    if (notifications.length === 0) {
-      const newNotifications = await db.insert(userNotifications).values({
-        userId,
-        fuelReminders: true,
-        priceAlerts: true,
-        maintenanceAlerts: true,
-      }).returning();
+    if (notifError && notifError.code === 'PGRST116') {
+      const { data: newNotifications, error: createError } = await supabase
+        .from('user_notifications')
+        .insert({
+          user_id: userId,
+          fuel_reminders: true,
+          price_alerts: true,
+          maintenance_alerts: true,
+        })
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error("Create notifications error:", createError);
+        return res.status(500).json({ error: "Database error: " + createError.message });
+      }
+      
       notifications = newNotifications;
+    } else if (notifError) {
+      console.error("Get notifications error:", notifError);
+      return res.status(500).json({ error: "Database error: " + notifError.message });
     }
     
     res.json({ 
-      user: user[0],
-      notifications: notifications[0]
+      user,
+      notifications
     });
   } catch (error) {
     console.error("Get user settings error:", error);
@@ -314,27 +404,45 @@ app.get("/api/user/:userId/settings", async (req, res) => {
 
 app.put("/api/user/:userId/settings", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { userId } = req.params;
     const { user: userData, notifications: notificationData } = req.body;
     
     // Update user data
     if (userData) {
-      await db.update(users)
-        .set({ 
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ 
           ...userData,
-          updatedAt: new Date()
+          updated_at: new Date().toISOString()
         })
-        .where(eq(users.id, userId));
+        .eq('id', userId);
+      
+      if (userError) {
+        console.error("Update user error:", userError);
+        return res.status(500).json({ error: "Database error: " + userError.message });
+      }
     }
     
     // Update notifications
     if (notificationData) {
-      await db.update(userNotifications)
-        .set({ 
-          ...notificationData,
-          updatedAt: new Date()
+      const { error: notifError } = await supabase
+        .from('user_notifications')
+        .update({ 
+          fuel_reminders: notificationData.fuelReminders,
+          price_alerts: notificationData.priceAlerts,
+          maintenance_alerts: notificationData.maintenanceAlerts,
+          updated_at: new Date().toISOString()
         })
-        .where(eq(userNotifications.userId, userId));
+        .eq('user_id', userId);
+      
+      if (notifError) {
+        console.error("Update notifications error:", notifError);
+        return res.status(500).json({ error: "Database error: " + notifError.message });
+      }
     }
     
     res.json({ message: "Settings updated successfully" });
@@ -347,26 +455,50 @@ app.put("/api/user/:userId/settings", async (req, res) => {
 // Fuel records endpoints
 app.get("/api/fuel-records/:userId", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { userId } = req.params;
-    const records = await db.select({
-      id: fuelRecords.id,
-      vehicleId: fuelRecords.vehicleId,
-      liters: fuelRecords.liters,
-      pricePerLiter: fuelRecords.pricePerLiter,
-      totalCost: fuelRecords.totalCost,
-      odometer: fuelRecords.odometer,
-      station: fuelRecords.station,
-      date: fuelRecords.date,
-      notes: fuelRecords.notes,
-      createdAt: fuelRecords.createdAt,
-      vehicleName: vehicles.name,
-    })
-    .from(fuelRecords)
-    .leftJoin(vehicles, eq(fuelRecords.vehicleId, vehicles.id))
-    .where(eq(fuelRecords.userId, userId))
-    .orderBy(desc(fuelRecords.date));
+    const { data: records, error } = await supabase
+      .from('fuel_records')
+      .select(`
+        id,
+        vehicle_id,
+        liters,
+        price_per_liter,
+        total_cost,
+        odometer,
+        station,
+        date,
+        notes,
+        created_at,
+        vehicles!inner(name)
+      `)
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
     
-    res.json({ records });
+    if (error) {
+      console.error("Get fuel records error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
+    }
+    
+    // Transform the data to match expected format
+    const transformedRecords = records.map(record => ({
+      id: record.id,
+      vehicleId: record.vehicle_id,
+      liters: record.liters,
+      pricePerLiter: record.price_per_liter,
+      totalCost: record.total_cost,
+      odometer: record.odometer,
+      station: record.station,
+      date: record.date,
+      notes: record.notes,
+      createdAt: record.created_at,
+      vehicleName: record.vehicles?.name
+    }));
+    
+    res.json({ records: transformedRecords });
   } catch (error) {
     console.error("Get fuel records error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -375,15 +507,35 @@ app.get("/api/fuel-records/:userId", async (req, res) => {
 
 app.post("/api/fuel-records", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const recordData = insertFuelRecordSchema.parse(req.body);
     const { userId } = req.body;
     
-    const newRecord = await db.insert(fuelRecords).values({
-      ...recordData,
-      userId,
-    }).returning();
+    const { data: newRecord, error } = await supabase
+      .from('fuel_records')
+      .insert({
+        user_id: userId,
+        vehicle_id: recordData.vehicleId,
+        liters: recordData.liters,
+        price_per_liter: recordData.pricePerLiter,
+        total_cost: recordData.totalCost,
+        odometer: recordData.odometer,
+        station: recordData.station,
+        date: recordData.date,
+        notes: recordData.notes,
+      })
+      .select()
+      .single();
     
-    res.status(201).json({ record: newRecord[0] });
+    if (error) {
+      console.error("Create fuel record error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
+    }
+    
+    res.status(201).json({ record: newRecord });
   } catch (error) {
     console.error("Create fuel record error:", error);
     if (error instanceof z.ZodError) {
@@ -395,20 +547,41 @@ app.post("/api/fuel-records", async (req, res) => {
 
 app.put("/api/fuel-records/:id", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { id } = req.params;
     const recordData = insertFuelRecordSchema.parse(req.body);
     const { userId } = req.body;
     
-    const updatedRecord = await db.update(fuelRecords)
-      .set({ ...recordData, updatedAt: new Date() })
-      .where(and(eq(fuelRecords.id, id), eq(fuelRecords.userId, userId)))
-      .returning();
+    const { data: updatedRecord, error } = await supabase
+      .from('fuel_records')
+      .update({
+        vehicle_id: recordData.vehicleId,
+        liters: recordData.liters,
+        price_per_liter: recordData.pricePerLiter,
+        total_cost: recordData.totalCost,
+        odometer: recordData.odometer,
+        station: recordData.station,
+        date: recordData.date,
+        notes: recordData.notes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
     
-    if (updatedRecord.length === 0) {
-      return res.status(404).json({ error: "Fuel record not found" });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: "Fuel record not found" });
+      }
+      console.error("Update fuel record error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
     }
     
-    res.json({ record: updatedRecord[0] });
+    res.json({ record: updatedRecord });
   } catch (error) {
     console.error("Update fuel record error:", error);
     if (error instanceof z.ZodError) {
@@ -420,15 +593,27 @@ app.put("/api/fuel-records/:id", async (req, res) => {
 
 app.delete("/api/fuel-records/:id", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Database not available" });
+    }
+
     const { id } = req.params;
     const { userId } = req.body;
     
-    const deletedRecord = await db.delete(fuelRecords)
-      .where(and(eq(fuelRecords.id, id), eq(fuelRecords.userId, userId)))
-      .returning();
+    const { data: deletedRecord, error } = await supabase
+      .from('fuel_records')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
     
-    if (deletedRecord.length === 0) {
-      return res.status(404).json({ error: "Fuel record not found" });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: "Fuel record not found" });
+      }
+      console.error("Delete fuel record error:", error);
+      return res.status(500).json({ error: "Database error: " + error.message });
     }
     
     res.json({ message: "Fuel record deleted successfully" });
