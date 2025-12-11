@@ -350,7 +350,7 @@ app.get("/api/user/:userId/settings", async (req, res) => {
     
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, username, password')
+      .select('id, username, email, full_name, role')
       .eq('id', userId)
       .single();
     
@@ -392,14 +392,14 @@ app.get("/api/user/:userId/settings", async (req, res) => {
       return res.status(500).json({ error: "Database error: " + notifError.message });
     }
     
-    // Return user data with defaults for missing fields
+    // Return user data with correct field mapping
     const userResponse = {
       id: user.id,
       username: user.username,
       email: user.email || "",
-      name: user.name || "",
-      currency: user.currency || "CRC",
-      units: user.units || "metric"
+      name: user.full_name || "",
+      currency: "CRC", // Default since column doesn't exist
+      units: "metric"  // Default since column doesn't exist
     };
 
     res.json({ 
@@ -425,19 +425,25 @@ app.put("/api/user/:userId/settings", async (req, res) => {
     const { userId } = req.params;
     const { user: userData, notifications: notificationData } = req.body;
     
-    // Update user data
+    // Update user data (only update fields that exist)
     if (userData) {
-      const { error: userError } = await supabase
-        .from('users')
-        .update({ 
-          ...userData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+      const updateData = {};
+      if (userData.email !== undefined) updateData.email = userData.email;
+      if (userData.name !== undefined) updateData.full_name = userData.name;
+      // Skip currency and units since they don't exist in the table
       
-      if (userError) {
-        console.error("Update user error:", userError);
-        return res.status(500).json({ error: "Database error: " + userError.message });
+      if (Object.keys(updateData).length > 0) {
+        updateData.updated_at = new Date().toISOString();
+        
+        const { error: userError } = await supabase
+          .from('users')
+          .update(updateData)
+          .eq('id', userId);
+      
+        if (userError) {
+          console.error("Update user error:", userError);
+          return res.status(500).json({ error: "Database error: " + userError.message });
+        }
       }
     }
     
@@ -654,22 +660,38 @@ app.get("/api/db-structure", async (req, res) => {
       return res.json({ error: "Database not available" });
     }
 
-    // Check what columns exist in users table
+    // Check what tables exist by trying to query them
+    const tableChecks = {};
+    
+    // Check users table
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('*')
       .limit(1);
+    tableChecks.users = { exists: !usersError, sample: users?.[0], error: usersError?.message };
 
-    // Check what tables exist
-    const { data: tables, error: tablesError } = await supabase
-      .rpc('get_table_names');
+    // Check vehicles table
+    const { data: vehicles, error: vehiclesError } = await supabase
+      .from('vehicles')
+      .select('*')
+      .limit(1);
+    tableChecks.vehicles = { exists: !vehiclesError, sample: vehicles?.[0], error: vehiclesError?.message };
 
-    res.json({
-      users_sample: users?.[0] || "No users found",
-      users_error: usersError?.message,
-      available_tables: tables || "Could not fetch tables",
-      tables_error: tablesError?.message
-    });
+    // Check user_notifications table
+    const { data: notifications, error: notificationsError } = await supabase
+      .from('user_notifications')
+      .select('*')
+      .limit(1);
+    tableChecks.user_notifications = { exists: !notificationsError, sample: notifications?.[0], error: notificationsError?.message };
+
+    // Check fuel_records table
+    const { data: fuelRecords, error: fuelRecordsError } = await supabase
+      .from('fuel_records')
+      .select('*')
+      .limit(1);
+    tableChecks.fuel_records = { exists: !fuelRecordsError, sample: fuelRecords?.[0], error: fuelRecordsError?.message };
+
+    res.json({ tables: tableChecks });
   } catch (error) {
     res.json({ error: error.message });
   }
